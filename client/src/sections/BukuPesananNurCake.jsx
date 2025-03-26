@@ -9,8 +9,12 @@ const BukuPesananNurCake = () => {
   const [pesananList, setPesananList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterDate, setFilterDate] = useState("");
+  const [filterDate, setFilterDate] = useState(() => {
+    const today = new Date();
+    return today.toLocaleDateString("en-CA"); // Format YYYY-MM-DD
+  });
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPickupStatus, setFilterPickupStatus] = useState("all");
   const [selectedPesanan, setSelectedPesanan] = useState(null);
   const [pickupStatus, setPickupStatus] = useState({});
   const [originalPaymentStatus, setOriginalPaymentStatus] = useState({});
@@ -42,6 +46,11 @@ const BukuPesananNurCake = () => {
       setMsg("Gagal memuat data pesanan");
       setLoading(false);
     }
+  };
+
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toLocaleDateString("en-CA");
   };
 
   const handleUpdateTransaksi = async (id, updates) => {
@@ -106,7 +115,7 @@ const BukuPesananNurCake = () => {
       handleUpdateTransaksi(id, {
         ...pesanan,
         status_pembayaran: checked
-          ? "SELESAI"
+          ? "Dijemput"
           : originalPaymentStatus[id] || "PENDING",
       });
     }
@@ -428,28 +437,88 @@ const BukuPesananNurCake = () => {
   };
 
   const filteredPesananList = pesananList
-    .filter((pesanan) => {
-      const matchesSearch = pesanan.atas_nama
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      .filter((pesanan) => {
+        const matchesSearch = pesanan.atas_nama
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase());
 
-      const matchesDate = filterDate
-        ? new Date(pesanan.tanggal_pengambilan).toLocaleDateString("en-CA") ===
-          filterDate
-        : true;
+        const matchesDate = filterDate
+            ? new Date(pesanan.tanggal_pengambilan).toLocaleDateString("en-CA") ===
+            filterDate
+            : true;
 
-      const matchesStatus =
-        filterStatus === "all"
-          ? true
-          : filterStatus === "completed"
-            ? pesanan.status_pembayaran === "SELESAI"
-            : pesanan.status_pembayaran === "PENDING";
+        const matchesStatus =
+            filterStatus === "all"
+                ? true
+                : filterStatus === "Belum Lunas"
+                    ? pesanan.status_pembayaran === "Belum Lunas"
+                    : filterStatus === "Lunas"
+                        ? pesanan.status_pembayaran === "Lunas"
+                        : filterStatus === "Dijemput"
+                            ? pesanan.status_pembayaran === "Dijemput"
+                            : true;
 
-      return matchesSearch && matchesDate && matchesStatus;
-    })
-    .sort(
-      (a, b) => new Date(a.tanggal_transaksi) - new Date(b.tanggal_transaksi)
+        const matchesPickupStatus =
+            filterPickupStatus === "all"
+                ? true
+                : filterPickupStatus === "dijemput"
+                    ? pesanan.status_pengambilan === "Dijemput"
+                    : filterPickupStatus === "belum_dijemput"
+                        ? pesanan.status_pengambilan !== "Dijemput"
+                        : true;
+
+        return matchesSearch && matchesDate && matchesStatus && matchesPickupStatus;
+      })
+      .sort((a, b) => {
+        // Prioritaskan pesanan dengan status pembayaran "Dijemput" ke bagian bawah
+        if (a.status_pembayaran === "Dijemput" && b.status_pembayaran !== "Dijemput") {
+          return 1;
+        }
+        if (b.status_pembayaran === "Dijemput" && a.status_pembayaran !== "Dijemput") {
+          return -1;
+        }
+
+        return new Date(a.tanggal_transaksi) - new Date(b.tanggal_transaksi);
+      });
+
+
+
+  const TogglePickupStatus = ({ pesanan }) => {
+    const isPickedUp = pickupStatus[pesanan.id_transaksi] || false;
+
+    return (
+        <div
+            className="flex items-center cursor-pointer select-none"
+            onClick={() => togglePickupStatus(pesanan.id_transaksi, !isPickedUp)}
+        >
+          <div
+              className={`
+            w-12 h-6 rounded-full relative transition-all duration-300 ease-in-out
+            ${isPickedUp ? 'bg-green-500' : 'bg-red-500'}
+          `}
+          >
+            <div
+                className={`
+              absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white 
+              shadow-md transition-all duration-300 ease-in-out
+              ${isPickedUp ? 'translate-x-6' : 'translate-x-1'}
+            `}
+            >
+              {isPickedUp ? (
+                  <Check className="w-4 h-4 text-green-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              ) : (
+                  <X className="w-4 h-4 text-red-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              )}
+            </div>
+          </div>
+          {/*tombol dijemput atau belum*/}
+        {/*  <span className={`ml-2 text-sm ${isPickedUp ? 'text-green-600' : 'text-red-600'}`}>*/}
+        {/*  {isPickedUp ? "Dijemput" : "Belum Dijemput"}*/}
+        {/*</span>*/}
+        </div>
     );
+  };
+
 
   return (
     // Buku Pesanan Kue
@@ -543,8 +612,9 @@ const BukuPesananNurCake = () => {
           onChange={(e) => setFilterStatus(e.target.value)}
           className="bg-[#2d2d2d] border-[#FFD700] border rounded p-2 text-[#DAA520]">
           <option value="all">Semua Status</option>
-          <option value="pending">Belum Selesai</option>
-          <option value="completed">Selesai</option>
+          <option value="Belum Lunas">Belum Lunas</option>
+          <option value="Lunas">Lunas</option>
+          <option value="Dijemput">Dijemput</option>
         </select>
       </div>
 
@@ -581,7 +651,7 @@ const BukuPesananNurCake = () => {
                     key={pesanan.id_transaksi}
                     className={`border-t border-[#FFD700]/30 ${
                       pickupStatus[pesanan.id_transaksi]
-                        ? "opacity-50 line-through"
+                        ? "opacity-50"
                         : ""
                     }`}>
                     <td className="px-4 py-3 text-[#DAA520]">
@@ -615,7 +685,7 @@ const BukuPesananNurCake = () => {
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded ${
-                          pesanan.status_pembayaran === "SELESAI"
+                          pesanan.status_pembayaran === "Dijemput"
                             ? "bg-green-900 text-green-200"
                             : "bg-yellow-900 text-yellow-200"
                         }`}>
@@ -645,31 +715,14 @@ const BukuPesananNurCake = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 flex items-center space-x-2">
+                    <td className="px-4 py-8 flex items-center space-x-2">
                       <button
                         onClick={() => setDetailLengkap(pesanan)}
                         className="bg-[#FFD700] text-[#1a1a1a] px-3 py-1 rounded text-sm mr-2 hover:bg-[#DAA520]"
                         title="Lihat Detail Pesanan">
                         Detail
                       </button>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={pickupStatus[pesanan.id_transaksi] || false}
-                          onChange={(e) =>
-                            togglePickupStatus(
-                              pesanan.id_transaksi,
-                              e.target.checked
-                            )
-                          }
-                          className="form-checkbox text-[#FFD700] mr-2 border-[#FFD700]"
-                        />
-                        <span className="text-[#DAA520]">
-                          {pickupStatus[pesanan.id_transaksi]
-                            ? "Dijemput"
-                            : "Belum"}
-                        </span>
-                      </div>
+                      <TogglePickupStatus key={pesanan.id_transaksi} pesanan={pesanan} />
                     </td>
                   </tr>
                 );
