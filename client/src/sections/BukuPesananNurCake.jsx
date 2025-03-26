@@ -11,10 +11,16 @@ const BukuPesananNurCake = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDate, setFilterDate] = useState(() => {
     const today = new Date();
-    return today.toLocaleDateString("en-CA"); // Format YYYY-MM-DD
+    return today.toLocaleDateString("en-CA");
+  });
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toLocaleDateString("en-CA");
   });
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPickupStatus, setFilterPickupStatus] = useState("all");
+  const [showAllDates, setShowAllDates] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedPesanan, setSelectedPesanan] = useState(null);
   const [pickupStatus, setPickupStatus] = useState({});
   const [originalPaymentStatus, setOriginalPaymentStatus] = useState({});
@@ -52,6 +58,37 @@ const BukuPesananNurCake = () => {
     const today = new Date();
     return today.toLocaleDateString("en-CA");
   };
+
+  const generateWeekDates = () => {
+    const centerDate = new Date(filterDate);
+    const dates = [];
+
+    // Mulai dari 3 hari sebelumnya hingga 3 hari setelahnya
+    for (let i = -3; i < 4; i++) {
+      const date = new Date(centerDate);
+      date.setDate(centerDate.getDate() + i);
+      dates.push({
+        date: date,
+        dateString: date.toLocaleDateString("en-CA"),
+        dayName: date.toLocaleDateString("id-ID", { weekday: 'long' })
+      });
+    }
+
+    return dates;
+  };
+
+  const handleDateFilterChange = (dateString) => {
+    // Jika dateString kosong dan sudah dalam mode showAllDates, kembalikan ke hari ini
+    if (dateString === '' && showAllDates) {
+      setFilterDate(getTodayDate());
+      setShowAllDates(false);
+      return;
+    }
+
+    // Set filter tanggal
+    setFilterDate(dateString);
+  };
+
 
   const handleUpdateTransaksi = async (id, updates) => {
     try {
@@ -443,8 +480,9 @@ const BukuPesananNurCake = () => {
             .includes(searchQuery.toLowerCase());
 
         const matchesDate = filterDate
-            ? new Date(pesanan.tanggal_pengambilan).toLocaleDateString("en-CA") ===
-            filterDate
+            ? new Date(pesanan.tanggal_pengambilan).toLocaleDateString('en-CA', {
+          timeZone: 'Asia/Jakarta'
+        }) === filterDate
             : true;
 
         const matchesStatus =
@@ -522,428 +560,518 @@ const BukuPesananNurCake = () => {
 
   return (
     // Buku Pesanan Kue
-    <section className="bg-[#1a1a1a] py-16 px-5 min-h-screen w-full md:py-20 md:px-20">
-      {msg && (
-        <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-4">
-          {msg}
-        </div>
-      )}
-
-      {notification.show && (
-        <div
-          className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-transform duration-300 transform translate-y-0`}
-          onTouchStart={(e) => {
-            const touch = e.touches[0];
-            const startY = touch.clientY;
-            const handleTouchMove = (e) => {
-              const touch = e.touches[0];
-              const currentY = touch.clientY;
-              const diff = currentY - startY;
-
-              if (diff > 50) {
-                setNotification({ ...notification, show: false });
-                document.removeEventListener("touchmove", handleTouchMove);
-              }
-            };
-
-            document.addEventListener("touchmove", handleTouchMove);
-
-            document.addEventListener(
-              "touchend",
-              () => {
-                document.removeEventListener("touchmove", handleTouchMove);
-              },
-              { once: true }
-            );
-          }}>
-          <div
-            className={`px-6 py-3 rounded-b-lg shadow-lg flex items-center justify-between ${
-              notification.type === "success"
-                ? "bg-green-900 text-green-200"
-                : "bg-red-900 text-red-200"
-            }`}>
-            <div className="flex items-center">
-              {notification.type === "success" ? (
-                <Check className="mr-2" size={18} />
-              ) : (
-                <X className="mr-2" size={18} />
-              )}
-              <span>{notification.message}</span>
+      <section className="bg-[#1a1a1a] py-16 px-5 min-h-screen w-full md:py-20 md:px-20">
+        {msg && (
+            <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-4">
+              {msg}
             </div>
+        )}
+
+        {notification.show && (
+            <div
+                className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-transform duration-300 transform translate-y-0`}
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  const startY = touch.clientY;
+                  const handleTouchMove = (e) => {
+                    const touch = e.touches[0];
+                    const currentY = touch.clientY;
+                    const diff = currentY - startY;
+
+                    if (diff > 50) {
+                      setNotification({...notification, show: false});
+                      document.removeEventListener("touchmove", handleTouchMove);
+                    }
+                  };
+
+                  document.addEventListener("touchmove", handleTouchMove);
+
+                  document.addEventListener(
+                      "touchend",
+                      () => {
+                        document.removeEventListener("touchmove", handleTouchMove);
+                      },
+                      {once: true}
+                  );
+                }}>
+              <div
+                  className={`px-6 py-3 rounded-b-lg shadow-lg flex items-center justify-between ${
+                      notification.type === "success"
+                          ? "bg-green-900 text-green-200"
+                          : "bg-red-900 text-red-200"
+                  }`}>
+                <div className="flex items-center">
+                  {notification.type === "success" ? (
+                      <Check className="mr-2" size={18}/>
+                  ) : (
+                      <X className="mr-2" size={18}/>
+                  )}
+                  <span>{notification.message}</span>
+                </div>
+                <button
+                    onClick={() => setNotification({...notification, show: false})}
+                    className="ml-4 text-gray-300 hover:text-white">
+                  <X size={18}/>
+                </button>
+              </div>
+            </div>
+        )}
+
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-[#FFD700]">
+            Buku Pesanan NurCake
+          </h1>
+          <Link
+              to="/pos-nc"
+              className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded hover:bg-[#DAA520]">
+            Tambah Pesanan
+          </Link>
+        </div>
+
+        <div className="w-full bg-[#2d2d2d] rounded-lg p-2 space-y-2 mb-2">
+          {/* Baris pertama: Pencarian dan Status */}
+          <div className="flex space-x-2">
+            <div className="relative flex-grow">
+              <input
+                  type="text"
+                  placeholder="Cari nama pemesan..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full py-2 px-8 bg-[#3d3d3d] border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#DAA520] text-[#FFD700] text-sm"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#DAA520]" size={18}/>
+            </div>
+
+            <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="py-2 px-3 bg-[#3d3d3d] border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#DAA520] text-[#FFD700] text-sm min-w-[150px]"
+            >
+              <option value="all">Semua Status</option>
+              <option value="Belum Lunas">Belum Lunas</option>
+              <option value="Lunas">Lunas</option>
+              <option value="Dijemput">Dijemput</option>
+            </select>
+          </div>
+
+          {/* Baris kedua: Filter Tanggal */}
+          <div className="flex space-x-2 w-full overflow-x-auto">
+            {/* Tombol Hari Ini */}
             <button
-              onClick={() => setNotification({ ...notification, show: false })}
-              className="ml-4 text-gray-300 hover:text-white">
-              <X size={18} />
+                onClick={() => handleDateFilterChange(getTodayDate())}
+                className={`px-12 py-2 rounded-md text-xs transition-all duration-300 flex-shrink-0
+        ${filterDate === getTodayDate()
+                    ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
+                    : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
+      `}
+            >
+              Hari Ini
+            </button>
+
+            {/* Tombol Pilih Tanggal dengan Modal Modern */}
+            <div className="relative flex-grow">
+              <button
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className={`w-full px-3 py-2 rounded-md text-xs transition-all duration-300 flex items-center justify-center
+          ${showDatePicker
+                      ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
+                      : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
+        `}
+              >
+                <Search className="mr-2" size={16}/>
+                {filterDate ? formatDate(filterDate) : 'Pilih Tanggal'}
+              </button>
+
+              {showDatePicker && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#2d2d2d] rounded-lg p-6 border border-[#FFD700] max-w-sm w-full">
+                      <input
+                          type="date"
+                          value={filterDate}
+                          onChange={(e) => {
+                            handleDateFilterChange(e.target.value);
+                            setShowDatePicker(false);
+                          }}
+                          className="w-full bg-[#3d3d3d] border border-[#FFD700] rounded-md p-2 text-[#DAA520]"
+                      />
+                      <button
+                          onClick={() => setShowDatePicker(false)}
+                          className="mt-4 w-full bg-[#FFD700] text-[#1a1a1a] py-2 rounded-md"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                  </div>
+              )}
+            </div>
+
+            {/* Tombol Minggu Ini */}
+            {!showAllDates && generateWeekDates().map((day, index) => (
+                <button
+                    key={index}
+                    onClick={() => handleDateFilterChange(day.dateString)}
+                    className={`flex-shrink-0 min-w-[50px] px-12 py-2 text-xs rounded-md transition-all duration-300
+          ${filterDate === day.dateString
+                        ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
+                        : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
+        `}
+                >
+                  <div className="flex flex-col items-center w-full">
+                    <span className="font-bold uppercase text-xs">{day.dayName.slice(0, 3)}</span>
+                    <span className="text-sm">{day.date.getDate()}</span>
+                  </div>
+                </button>
+            ))}
+
+            {/* Tombol Semua */}
+            <button
+                onClick={() => {
+                  if (showAllDates) {
+                    handleDateFilterChange('');
+                  } else {
+                    setShowAllDates(true);
+                    handleDateFilterChange('');
+                    setShowDatePicker(false);
+                  }
+                }}
+                className={`flex-shrink-0 px-12 py-2 rounded-md text-xs transition-all duration-300 
+        ${showAllDates
+                    ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
+                    : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
+      `}
+            >
+              {showAllDates ? 'Tutup' : 'Semua'}
             </button>
           </div>
         </div>
-      )}
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-[#FFD700]">
-          Buku Pesanan NurCake
-        </h1>
-        <Link
-          to="/pos-nc"
-          className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded hover:bg-[#DAA520]">
-          Tambah Pesanan
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Cari nama pemesan..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-[#2d2d2d] border-[#FFD700] border rounded p-2 w-full pl-8 text-[#DAA520] placeholder-[#DAA520]/50"
-          />
-          <Search className="absolute left-2 top-3 text-[#DAA520]" size={18} />
-        </div>
-        <input
-          type="date"
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          className="bg-[#2d2d2d] border-[#FFD700] border rounded p-2 text-[#DAA520]"
-        />
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-[#2d2d2d] border-[#FFD700] border rounded p-2 text-[#DAA520]">
-          <option value="all">Semua Status</option>
-          <option value="Belum Lunas">Belum Lunas</option>
-          <option value="Lunas">Lunas</option>
-          <option value="Dijemput">Dijemput</option>
-        </select>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-4 text-[#DAA520]">Memuat...</div>
-      ) : (
-        <div className="bg-[#2d2d2d] rounded-lg shadow overflow-x-auto border border-[#FFD700]">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-[#3d3d3d]">
-                <th className="px-4 py-3 text-left text-[#FFD700]">
-                  Tanggal Ambil
-                </th>
-                <th className="px-4 py-3 text-left text-[#FFD700]">
-                  Atas Nama
-                </th>
-                <th className="px-4 py-3 text-left text-[#FFD700]">Pesanan</th>
-                <th className="px-4 py-3 text-left text-[#FFD700]">
-                  Status Bayar
-                </th>
-                <th className="px-4 py-3 text-left text-[#FFD700]">
-                  Status Kue
-                </th>
-                <th className="px-4 py-3 text-left text-[#FFD700]">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPesananList.map((pesanan) => {
-                const hasCustomCake = pesanan.items.some(
-                  (item) => item.tipe === "custom_cake"
-                );
-                return (
-                  <tr
-                    key={pesanan.id_transaksi}
-                    className={`border-t border-[#FFD700]/30 ${
-                      pickupStatus[pesanan.id_transaksi]
-                        ? "opacity-50"
-                        : ""
-                    }`}>
-                    <td className="px-4 py-3 text-[#DAA520]">
-                      <div>
+        {loading ? (
+            <div className="text-center py-4 text-[#DAA520]">Memuat...</div>
+        ) : (
+            <div className="bg-[#2d2d2d] rounded-lg shadow overflow-x-auto border border-[#FFD700]">
+              <table className="min-w-full">
+                <thead>
+                <tr className="bg-[#3d3d3d]">
+                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                    Tanggal Ambil
+                  </th>
+                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                    Atas Nama
+                  </th>
+                  <th className="px-4 py-3 text-left text-[#FFD700]">Pesanan</th>
+                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                    Status Bayar
+                  </th>
+                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                    Status Kue
+                  </th>
+                  <th className="px-4 py-3 text-left text-[#FFD700]">Aksi</th>
+                </tr>
+                </thead>
+                <tbody>
+                {filteredPesananList.map((pesanan) => {
+                  const hasCustomCake = pesanan.items.some(
+                      (item) => item.tipe === "custom_cake"
+                  );
+                  return (
+                      <tr
+                          key={pesanan.id_transaksi}
+                          className={`border-t border-[#FFD700]/30 ${
+                              pickupStatus[pesanan.id_transaksi]
+                                  ? "opacity-50"
+                                  : ""
+                          }`}>
+                        <td className="px-4 py-3 text-[#DAA520]">
+                          <div>
                         <span className="block text-xs text-[#DAA520]/70">
                           Transaksi: {formatDate(pesanan.tanggal_transaksi)}
                         </span>
-                        <span className="block font-semibold">
+                            <span className="block font-semibold">
                           {formatDate(pesanan.tanggal_pengambilan)}
                         </span>
-                        <span className="block text-sm text-[#DAA520]">
+                            <span className="block text-sm text-[#DAA520]">
                           Jam: {pesanan.waktu_pengambilan}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-[#DAA520]">
-                      {pesanan.atas_nama}
-                    </td>
-                    <td className="px-4 py-3 text-[#DAA520]">
-                      {pesanan.items.map((item, index) => (
-                        <div key={index} className="mb-1">
-                          {item.jenis_kue || item.nama_produk} -{" "}
-                          {item.jumlah || item.jumlah_pesanan} x Rp
-                          {item.harga_jual.toLocaleString()}
-                        </div>
-                      ))}
-                      <div className="font-bold mt-2 text-right text-[#FFD700]">
-                        Total: Rp {pesanan.total_harga.toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[#DAA520]">
+                          {pesanan.atas_nama}
+                        </td>
+                        <td className="px-4 py-3 text-[#DAA520]">
+                          {pesanan.items.map((item, index) => (
+                              <div key={index} className="mb-1">
+                                {item.jenis_kue || item.nama_produk} -{" "}
+                                {item.jumlah || item.jumlah_pesanan} x Rp
+                                {item.harga_jual.toLocaleString()}
+                              </div>
+                          ))}
+                          <div className="font-bold mt-2 text-right text-[#FFD700]">
+                            Total: Rp {pesanan.total_harga.toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
                       <span
-                        className={`px-2 py-1 rounded ${
-                          pesanan.status_pembayaran === "Dijemput"
-                            ? "bg-green-900 text-green-200"
-                            : "bg-yellow-900 text-yellow-200"
-                        }`}>
+                          className={`px-2 py-1 rounded ${
+                              pesanan.status_pembayaran === "Dijemput"
+                                  ? "bg-green-900 text-green-200"
+                                  : "bg-yellow-900 text-yellow-200"
+                          }`}>
                         {pesanan.status_pembayaran}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {hasCustomCake ? (
-                        <div>
-                          <select
-                            value={pesanan.status_kue || "menunggu"}
-                            onChange={(e) =>
-                              updateCakeProcessStatus(
-                                pesanan.id_transaksi,
-                                e.target.value
-                              )
-                            }
-                            className="w-full py-2 px-3 bg-[#3d3d3d] border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#DAA520] text-[#FFD700]">
-                            <option value="menunggu">Menunggu</option>
-                            <option value="diproses">Diproses</option>
-                            <option value="selesai">Selesai</option>
-                          </select>
-                        </div>
-                      ) : (
-                        <span className="text-[#DAA520]">
+                        </td>
+                        <td className="px-4 py-3">
+                          {hasCustomCake ? (
+                              <div>
+                                <select
+                                    value={pesanan.status_kue || "menunggu"}
+                                    onChange={(e) =>
+                                        updateCakeProcessStatus(
+                                            pesanan.id_transaksi,
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full py-2 px-3 bg-[#3d3d3d] border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#DAA520] text-[#FFD700]">
+                                  <option value="menunggu">Menunggu</option>
+                                  <option value="diproses">Diproses</option>
+                                  <option value="selesai">Selesai</option>
+                                </select>
+                              </div>
+                          ) : (
+                              <span className="text-[#DAA520]">
                           Tidak ada kue request
                         </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-8 flex items-center space-x-2">
-                      <button
-                        onClick={() => setDetailLengkap(pesanan)}
-                        className="bg-[#FFD700] text-[#1a1a1a] px-3 py-1 rounded text-sm mr-2 hover:bg-[#DAA520]"
-                        title="Lihat Detail Pesanan">
-                        Detail
-                      </button>
-                      <TogglePickupStatus key={pesanan.id_transaksi} pesanan={pesanan} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Modal Detail */}
-      {detailLengkap && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center pt-28 md:pt-12">
-          <div className="bg-[#2d2d2d] rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-[#FFD700]">
-            <div className="flex justify-between items-center mb-4 p-6 pb-0">
-              <h2 className="text-2xl font-bold text-[#FFD700]">
-                Detail Pesanan
-              </h2>
-              <button
-                onClick={() => cetakLaporan(detailLengkap)}
-                className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded flex items-center hover:bg-[#DAA520]">
-                <Printer className="mr-2" size={18} /> Cetak Laporan
-              </button>
+                          )}
+                        </td>
+                        <td className="px-4 py-8 flex items-center space-x-2">
+                          <button
+                              onClick={() => setDetailLengkap(pesanan)}
+                              className="bg-[#FFD700] text-[#1a1a1a] px-3 py-1 rounded text-sm mr-2 hover:bg-[#DAA520]"
+                              title="Lihat Detail Pesanan">
+                            Detail
+                          </button>
+                          <TogglePickupStatus key={pesanan.id_transaksi} pesanan={pesanan}/>
+                        </td>
+                      </tr>
+                  );
+                })}
+                </tbody>
+              </table>
             </div>
+        )}
 
-            <div className="overflow-y-auto px-6 py-4 space-y-4 text-[#DAA520]">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-semibold text-[#FFD700]">ID Transaksi</p>
-                  <p className="text-[#DAA520]">{detailLengkap.id_transaksi}</p>
+        {/* Modal Detail */}
+        {detailLengkap && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center pt-28 md:pt-12">
+              <div
+                  className="bg-[#2d2d2d] rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-[#FFD700]">
+                <div className="flex justify-between items-center mb-4 p-6 pb-0">
+                  <h2 className="text-2xl font-bold text-[#FFD700]">
+                    Detail Pesanan
+                  </h2>
+                  <button
+                      onClick={() => cetakLaporan(detailLengkap)}
+                      className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded flex items-center hover:bg-[#DAA520]">
+                    <Printer className="mr-2" size={18}/> Cetak Laporan
+                  </button>
                 </div>
-                <div>
-                  <p className="font-semibold text-[#FFD700]">
-                    Tanggal Transaksi
-                  </p>
-                  <p className="text-[#DAA520]">
-                    {formatDate(detailLengkap.tanggal_transaksi)}
-                  </p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-semibold text-[#FFD700]">
-                    Metode Pembayaran
-                  </p>
-                  <p className="text-[#DAA520]">
-                    {detailLengkap.metode_pembayaran}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold text-[#FFD700]">Nama Pemesan</p>
-                  <p className="text-[#DAA520]">{detailLengkap.atas_nama}</p>
-                </div>
-              </div>
+                <div className="overflow-y-auto px-6 py-4 space-y-4 text-[#DAA520]">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">ID Transaksi</p>
+                      <p className="text-[#DAA520]">{detailLengkap.id_transaksi}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">
+                        Tanggal Transaksi
+                      </p>
+                      <p className="text-[#DAA520]">
+                        {formatDate(detailLengkap.tanggal_transaksi)}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-semibold text-[#FFD700]">
-                    Status Pembayaran
-                  </p>
-                  <p className="text-[#DAA520]">
-                    {detailLengkap.status_pembayaran}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold text-[#FFD700]">Status Pesanan</p>
-                  <p className="text-[#DAA520]">{detailLengkap.status_kue}</p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">
+                        Metode Pembayaran
+                      </p>
+                      <p className="text-[#DAA520]">
+                        {detailLengkap.metode_pembayaran}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">Nama Pemesan</p>
+                      <p className="text-[#DAA520]">{detailLengkap.atas_nama}</p>
+                    </div>
+                  </div>
 
-              <div className="mb-4">
-                <h3 className="font-semibold text-[#FFD700] mb-2">
-                  Detail Produk
-                </h3>
-                {detailLengkap.items.map((item, index) => (
-                  <div key={index} className="mb-4">
-                    <div className="flex justify-between mb-1">
-                      <span>{item.jenis_kue || item.nama_produk}</span>
-                      <div className="flex items-center">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">
+                        Status Pembayaran
+                      </p>
+                      <p className="text-[#DAA520]">
+                        {detailLengkap.status_pembayaran}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">Status Pesanan</p>
+                      <p className="text-[#DAA520]">{detailLengkap.status_kue}</p>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-[#FFD700] mb-2">
+                      Detail Produk
+                    </h3>
+                    {detailLengkap.items.map((item, index) => (
+                        <div key={index} className="mb-4">
+                          <div className="flex justify-between mb-1">
+                            <span>{item.jenis_kue || item.nama_produk}</span>
+                            <div className="flex items-center">
                         <span className="text-gray-500 mr-2">
                           ({item.jumlah || item.jumlah_pesanan}x)
                         </span>
-                        <span>
+                              <span>
                           Rp{" "}
-                          {Number(
-                            item.harga_jual *
-                              (item.jumlah || item.jumlah_pesanan)
-                          ).toLocaleString()}
+                                {Number(
+                                    item.harga_jual *
+                                    (item.jumlah || item.jumlah_pesanan)
+                                ).toLocaleString()}
                         </span>
-                      </div>
-                    </div>
-                    {renderBiayaTambahan(item)}
+                            </div>
+                          </div>
+                          {renderBiayaTambahan(item)}
+                        </div>
+                    ))}
+                    {renderAdditionalItems(detailLengkap.additional_items)}
                   </div>
-                ))}
-                {renderAdditionalItems(detailLengkap.additional_items)}
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-semibold text-[#FFD700]">Total Harga</p>
-                  <p>Rp {Number(detailLengkap.total_harga).toLocaleString()}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">Total Harga</p>
+                      <p>Rp {Number(detailLengkap.total_harga).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">Jumlah Dibayar</p>
+                      <p>
+                        Rp {Number(detailLengkap.jumlah_dibayar).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">
+                        Tanggal Pengambilan
+                      </p>
+                      <p className="text-[#DAA520]">
+                        {formatDate(detailLengkap.tanggal_pengambilan)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#FFD700]">
+                        Waktu Pengambilan
+                      </p>
+                      <p className="text-[#DAA520]">
+                        {detailLengkap.waktu_pengambilan}
+                      </p>
+                    </div>
+                  </div>
+
+                  {detailLengkap.catatan && (
+                      <div className="mb-4">
+                        <p className="font-semibold text-[#FFD700]">Catatan</p>
+                        <p className="text-[#DAA520]">{detailLengkap.catatan}</p>
+                      </div>
+                  )}
                 </div>
-                <div>
-                  <p className="font-semibold text-[#FFD700]">Jumlah Dibayar</p>
-                  <p>
-                    Rp {Number(detailLengkap.jumlah_dibayar).toLocaleString()}
-                  </p>
+
+                <div className="p-6 pt-0">
+                  <button
+                      onClick={() => setDetailLengkap(null)}
+                      className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded w-full hover:bg-[#DAA520]">
+                    Tutup
+                  </button>
                 </div>
               </div>
+            </div>
+        )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-semibold text-[#FFD700]">
-                    Tanggal Pengambilan
-                  </p>
-                  <p className="text-[#DAA520]">
-                    {formatDate(detailLengkap.tanggal_pengambilan)}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold text-[#FFD700]">
-                    Waktu Pengambilan
-                  </p>
-                  <p className="text-[#DAA520]">
-                    {detailLengkap.waktu_pengambilan}
-                  </p>
-                </div>
-              </div>
+        {selectedPesanan && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+                <h2 className="text-2xl font-bold mb-4">Detail Pesanan</h2>
 
-              {detailLengkap.catatan && (
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="font-semibold">Nama Pemesan</p>
+                    <p>{selectedPesanan.atas_nama}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Status Pembayaran</p>
+                    <p>{selectedPesanan.status_pembayaran}</p>
+                  </div>
+                </div>
+
                 <div className="mb-4">
-                  <p className="font-semibold text-[#FFD700]">Catatan</p>
-                  <p className="text-[#DAA520]">{detailLengkap.catatan}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 pt-0">
-              <button
-                onClick={() => setDetailLengkap(null)}
-                className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded w-full hover:bg-[#DAA520]">
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {selectedPesanan && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-            <h2 className="text-2xl font-bold mb-4">Detail Pesanan</h2>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="font-semibold">Nama Pemesan</p>
-                <p>{selectedPesanan.atas_nama}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Status Pembayaran</p>
-                <p>{selectedPesanan.status_pembayaran}</p>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Detail Produk</h3>
-              {selectedPesanan.items.map((item, index) => (
-                <div key={index} className="flex justify-between mb-1">
+                  <h3 className="font-semibold mb-2">Detail Produk</h3>
+                  {selectedPesanan.items.map((item, index) => (
+                      <div key={index} className="flex justify-between mb-1">
                   <span>
                     {item.jenis_kue} ({item.jumlah}x)
                   </span>
-                  <span>
+                        <span>
                     Rp {Number(item.harga_jual * item.jumlah).toLocaleString()}
                   </span>
+                      </div>
+                  ))}
                 </div>
-              ))}
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="font-semibold">Total Harga</p>
+                    <p>Rp {Number(selectedPesanan.total_harga).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Jumlah Dibayar</p>
+                    <p>
+                      Rp {Number(selectedPesanan.jumlah_dibayar).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="font-semibold">Tanggal Transaksi</p>
+                    <p>{formatDate(selectedPesanan.tanggal_transaksi)}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Tanggal & Waktu Pengambilan</p>
+                    <p>
+                      {formatDate(selectedPesanan.tanggal_pengambilan)}{" "}
+                      {selectedPesanan.waktu_pengambilan}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedPesanan.catatan && (
+                    <div className="mb-4">
+                      <p className="font-semibold">Catatan</p>
+                      <p>{selectedPesanan.catatan}</p>
+                    </div>
+                )}
+
+                <button
+                    onClick={() => setSelectedPesanan(null)}
+                    className="bg-teal-600 text-white px-4 py-2 rounded">
+                  Tutup
+                </button>
+              </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="font-semibold">Total Harga</p>
-                <p>Rp {Number(selectedPesanan.total_harga).toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Jumlah Dibayar</p>
-                <p>
-                  Rp {Number(selectedPesanan.jumlah_dibayar).toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="font-semibold">Tanggal Transaksi</p>
-                <p>{formatDate(selectedPesanan.tanggal_transaksi)}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Tanggal & Waktu Pengambilan</p>
-                <p>
-                  {formatDate(selectedPesanan.tanggal_pengambilan)}{" "}
-                  {selectedPesanan.waktu_pengambilan}
-                </p>
-              </div>
-            </div>
-
-            {selectedPesanan.catatan && (
-              <div className="mb-4">
-                <p className="font-semibold">Catatan</p>
-                <p>{selectedPesanan.catatan}</p>
-              </div>
-            )}
-
-            <button
-              onClick={() => setSelectedPesanan(null)}
-              className="bg-teal-600 text-white px-4 py-2 rounded">
-              Tutup
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
+        )}
+      </section>
   );
 };
 
