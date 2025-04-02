@@ -20,7 +20,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
 import KueReady from "../components/KueReady.jsx";
 
-const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
+const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refreshTrigger }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   // Add new state for additional cost form visibility
@@ -87,19 +87,19 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
   };
 
   // Tambahkan useEffect untuk memantau perubahan pada selectedProduk
-  useEffect(() => {
-    // Filter kueReadyList untuk menghapus item yang sudah terpilih
-    if (selectedProduk && selectedProduk.length > 0) {
-      const filteredKueReadyList = kueReadyList.filter(
-        (kue) =>
-          !selectedProduk.some((selected) => selected.id_kue === kue.id_kue)
-      );
-
-      if (filteredKueReadyList.length !== kueReadyList.length) {
-        setKueReadyList(filteredKueReadyList);
-      }
-    }
-  }, [selectedProduk]);
+  // useEffect(() => {
+  //   // Filter kueReadyList untuk menghapus item yang sudah terpilih
+  //   if (selectedProduk && selectedProduk.length > 0) {
+  //     const filteredKueReadyList = kueReadyList.filter(
+  //       (kue) =>
+  //         !selectedProduk.some((selected) => selected.id_kue === kue.id_kue)
+  //     );
+  //
+  //     if (filteredKueReadyList.length !== kueReadyList.length) {
+  //       setKueReadyList(filteredKueReadyList);
+  //     }
+  //   }
+  // }, [selectedProduk]);
 
   // Tambahkan fungsi ini untuk menghapus kue dari tampilan dan database
   const removeKueFromList = async (kueId) => {
@@ -129,14 +129,20 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
     return matchesSearch && matchesCategory;
   });
 
+  // Fungsi untuk mengambil daftar kue ready
   const fetchKueReadyList = async () => {
     try {
       const response = await axios.get("http://localhost:3000/kue-ready");
       setKueReadyList(response.data || []);
     } catch (error) {
-      console.error("Gagal mengambil daftar kue ready:", error);
+      console.error("Error fetching kue ready list:", error);
     }
   };
+
+  // Jalankan fetchKueReadyList setiap kali refreshTrigger berubah
+  useEffect(() => {
+    fetchKueReadyList();
+  }, [refreshTrigger]);
 
   useEffect(() => {
     fetchHargaRules();
@@ -540,7 +546,7 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
 
   // Check if a kue ready is already selected
   const isKueReadySelected = (kueId) => {
-    return selectedProduk.some((item) => item.id_kue === kueId);
+    return selectedProduk && selectedProduk.some((item) => item.id_kue === kueId);
   };
 
   // Fungsi untuk mengatur status tombol dan form
@@ -565,9 +571,9 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
   return (
     // Daftar Produk POS Nur Cake
     <section className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-[#FFD700]">Daftar Produk</h2>
-      </div>
+      {/*<div className="flex items-center justify-between">*/}
+      {/*  <h2 className="text-3xl font-bold text-[#FFD700]">Daftar Produk</h2>*/}
+      {/*</div>*/}
 
       {/* Custom Cake Order Section */}
       <Card className="bg-[#2d2d2d] border-[#FFD700] border">
@@ -585,7 +591,7 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
               onClick={handleToggleCustomCakeOrder}
               className="mt-1 bg-[#3d3d3d] hover:bg-[#4d4d4d] border border-[#FFD700]">
               <Plus className="h-4 w-4 mr-2 " />
-              Buat Pesanan Request
+              Buat Pesanan
             </Button>
           )}
         </div>
@@ -917,8 +923,10 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
               const isSelected = isKueReadySelected(kue.id_kue);
               return (
                 <Card
-                  key={kue.id_kue}
-                  className={`overflow-hidden bg-[#1a1a1a] border border-[#FFD700] ${isSelected ? "opacity-50" : ""}`}>
+                    key={kue.id_kue}
+                    className={`overflow-hidden bg-[#1a1a1a] border border-[#FFD700] ${
+                        isKueReadySelected(kue.id_kue) ? "opacity-50" : ""
+                    }`}>
                   <div className="aspect-square relative">
                     {kue.gambar ? (
                       <img
@@ -960,11 +968,11 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
                     </div>
                     <div className="flex gap-2 mt-4">
                       <Button
-                        onClick={() => handleKueSelection(kue)}
-                        className="flex-1 bg-[#3d3d3d] hover:bg-[#4d4d4d] border border-[#FFD700]"
-                        disabled={isSelected}>
-                        {isSelected ? "Sudah Dipilih" : "Tambah"}
-                      </Button>
+                          onClick={() => handleKueSelection(kue)}
+                          className="flex-1 bg-[#3d3d3d] hover:bg-[#4d4d4d] border border-[#FFD700]"
+                          disabled={isKueReadySelected(kue.id_kue)}>
+                        {isKueReadySelected(kue.id_kue) ? "Sudah Dipilih" : "Tambah"}
+                      </Button> 
                       <Button
                         onClick={() => {
                           if (
@@ -975,7 +983,7 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk }) => {
                             removeKueFromList(kue.id_kue);
                           }
                         }}
-                        className="bg-red-600 hover:bg-red-700 border border-[#FFD700]">
+                        className="bg-red-600 hover:bg-red-700 border border-[#FFD700]" disabled={isKueReadySelected(kue.id_kue)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

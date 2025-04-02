@@ -1,5 +1,5 @@
 // TransaksiNBAModels.js;
-import db from "../config/database.js";
+import db from "../config/Database.js";
 
 export const getAllTransaksi = async () => {
   const query = `

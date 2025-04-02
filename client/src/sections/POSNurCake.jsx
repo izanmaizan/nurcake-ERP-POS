@@ -16,6 +16,7 @@ const POSNurCake = () => {
     new Date().toISOString().slice(0, 10)
   );
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [refreshKueReady, setRefreshKueReady] = useState(0);
 
   // Tambahkan fungsi untuk menampilkan/menyembunyikan tombol scroll berdasarkan posisi scroll
   useEffect(() => {
@@ -68,6 +69,11 @@ const POSNurCake = () => {
 
     fetchProdukList();
   }, []);
+
+  // Fungsi untuk memicu refresh daftar kue ready
+  const triggerKueReadyRefresh = () => {
+    setRefreshKueReady(prev => prev + 1);
+  };
 
   // Fungsi untuk menangani pengembalian kue ready
   const handleReturnKueReady = (returnedKue) => {
@@ -166,6 +172,9 @@ const POSNurCake = () => {
       const currentDate = new Date().toISOString().slice(0, 10);
       setTanggalTransaksi(currentDate);
       setTanggalPengambilan(currentDate);
+
+      // Tambahkan: Trigger refresh daftar kue ready
+      triggerKueReadyRefresh();
     } catch (error) {
       console.error("Error dalam transaksi:", error);
       alert("Gagal melakukan transaksi");
@@ -195,7 +204,7 @@ const POSNurCake = () => {
     <section className="bg-[#1a1a1a] py-16 px-5 h-full w-full md:py-24 md:px-20 flex space-x-8">
       <div className="flex-1">
         <h1 className="text-[40px] font-semibold mb-5 text-[#FFD700] font-Roboto">
-          Point of Sales (POS) Nur Cake
+          Point of Sales Nur Cake
         </h1>
 
         <DaftarProduk
@@ -203,6 +212,7 @@ const POSNurCake = () => {
           handleAddProduk={handleAddProduk}
           selectedProduk={selectedProduk}
           onItemRemoved={handleItemRemoved}
+          refreshTrigger={refreshKueReady}
         />
       </div>
 
@@ -218,6 +228,7 @@ const POSNurCake = () => {
           tanggalPengambilan={tanggalPengambilan}
           handleTanggalTransaksiChange={setTanggalTransaksi}
           handleTanggalPengambilanChange={setTanggalPengambilan}
+          triggerKueReadyRefresh={triggerKueReadyRefresh}
         />
       </div>
 

@@ -31,6 +31,7 @@ const TransaksiPOSNurCake = ({
   tanggalPengambilan,
   handleTanggalTransaksiChange,
   handleTanggalPengambilanChange,
+  triggerKueReadyRefresh
 }) => {
   const [metodePembayaran, setMetodePembayaran] = useState("cash");
   const [jumlahDibayar, setJumlahDibayar] = useState(0);
@@ -322,11 +323,16 @@ const TransaksiPOSNurCake = ({
       );
 
       // Setelah transaksi berhasil, hapus kue ready dari database
-      for (const item of selectedProduk) {
-        if (item.id_kue) {
-          // Hapus kue ready dari database
-          await axios.delete(`http://localhost:3000/kue-ready/${item.id_kue}`);
-        }
+      // for (const item of selectedProduk) {
+      //   if (item.id_kue) {
+      //     // Hapus kue ready dari database
+      //     await axios.delete(`http://localhost:3000/kue-ready/${item.id_kue}`);
+      //   }
+      // }
+
+      // Perbarui tampilan daftar kue ready setelah menghapus
+      if (triggerKueReadyRefresh) {
+        triggerKueReadyRefresh();
       }
 
       // Cetak struk otomatis setelah transaksi berhasil

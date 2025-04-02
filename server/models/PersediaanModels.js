@@ -1,5 +1,5 @@
 // PersediaanModels.js
-import db from "../config/database.js";
+import db from "../config/Database.js";
 
 export const getAllItems = async () => {
   const query = `
