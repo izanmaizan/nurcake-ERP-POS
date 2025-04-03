@@ -485,6 +485,19 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
         0
       );
 
+      // Handle file upload
+      let gambarBase64 = null;
+      if (orderDetails.gambar_model) {
+        const reader = new FileReader();
+        // Convert file to base64
+        await new Promise((resolve, reject) => {
+          reader.onload = resolve;
+          reader.onerror = reject;
+          reader.readAsDataURL(orderDetails.gambar_model);
+        });
+        gambarBase64 = reader.result;
+      }
+
       const customCake = {
         id_custom: Date.now(),
         jenis_kue: orderDetails.jenis_kue,
@@ -507,6 +520,8 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
         biaya_tambahan: orderDetails.biaya_tambahan,
         total_biaya_tambahan: totalBiayaTambahan,
         tipe: "custom_cake",
+        // Tambahkan gambar model ke objek kue
+        gambar_model: gambarBase64
       };
 
       handleAddProduk(customCake);
@@ -939,20 +954,6 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
                         <Cake className="h-12 w-12 text-[#FFD700]" />
                       </div>
                     )}
-                    {/* <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (
-                          window.confirm(
-                            "Apakah Anda yakin ingin menghapus kue ini dari stok?"
-                          )
-                        ) {
-                          removeKueFromList(kue.id_kue);
-                        }
-                      }}
-                      className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 h-8 w-8 p-0 rounded-full">
-                      <Trash2 className="h-4 w-4" />
-                    </Button> */}
                   </div>
                   <CardContent className="p-4">
                     <h3 className="text-lg font-semibold mb-2 text-[#FFD700]">
