@@ -32,7 +32,7 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
     kotak_kue: "",
     jumlah_pesanan: 1,
     catatan_request: "",
-    gambar_model: null,
+    gambar_model: [],
     status: "pending",
     biaya_tambahan: [],
   });
@@ -43,9 +43,7 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
   const [selectedKue, setSelectedKue] = useState(null);
   const [cakeName, setCakeName] = useState("");
-
   const [categories, setCategories] = useState([]);
-
   const [hargaRules, setHargaRules] = useState([]);
   const [jenisKueOptions, setJenisKueOptions] = useState([]);
   const [variasiKueOptions, setVariasiKueOptions] = useState([]);
@@ -54,6 +52,7 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
   const [filteredRules, setFilteredRules] = useState([]);
   const [totalHarga, setTotalHarga] = useState(0);
   const [hargaDasar, setHargaDasar] = useState(0);
+  const [imagePreview, setImagePreview] = useState(null);
   const [isCustomCakeOrderVisible, setIsCustomCakeOrderVisible] =
     useState(false);
 
@@ -85,21 +84,6 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
       setLoadingProduk(false);
     }
   };
-
-  // Tambahkan useEffect untuk memantau perubahan pada selectedProduk
-  // useEffect(() => {
-  //   // Filter kueReadyList untuk menghapus item yang sudah terpilih
-  //   if (selectedProduk && selectedProduk.length > 0) {
-  //     const filteredKueReadyList = kueReadyList.filter(
-  //       (kue) =>
-  //         !selectedProduk.some((selected) => selected.id_kue === kue.id_kue)
-  //     );
-  //
-  //     if (filteredKueReadyList.length !== kueReadyList.length) {
-  //       setKueReadyList(filteredKueReadyList);
-  //     }
-  //   }
-  // }, [selectedProduk]);
 
   // Tambahkan fungsi ini untuk menghapus kue dari tampilan dan database
   const removeKueFromList = async (kueId) => {
@@ -452,11 +436,27 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
 
   const handleOrderChange = (e) => {
     const { name, value, type, files } = e.target;
-    if (type === "file") {
+    if (type === "file" && name === "gambar_model") {
+      // Konversi FileList ke array
+      const fileArray = Array.from(files);
+
+      // Pastikan prev.gambar_model adalah array sebelum menggunakan spread operator
       setOrderDetails((prev) => ({
         ...prev,
-        [name]: files[0],
+        gambar_model: Array.isArray(prev.gambar_model)
+            ? [...prev.gambar_model, ...fileArray]
+            : [...fileArray],
       }));
+
+      // Buat preview untuk setiap gambar
+      fileArray.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Pastikan kita selalu memperlakukan imagePreview sebagai array
+          setImagePreview(prev => Array.isArray(prev) ? [...prev, e.target.result] : [e.target.result]);
+        };
+        reader.readAsDataURL(file);
+      });
     } else {
       setOrderDetails((prev) => ({
         ...prev,
@@ -465,37 +465,46 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
     }
   };
 
+
+  const handleRemoveImage = (index) => {
+    setOrderDetails(prev => ({
+      ...prev,
+      gambar_model: prev.gambar_model.filter((_, i) => i !== index)
+    }));
+    setImagePreview(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleOrderSubmit = async (e) => {
     e.preventDefault();
     try {
       // Find the matching rule to get the modal (cost price)
       const matchingRule = hargaRules.find(
-        (rule) =>
-          rule.jenis_kue === orderDetails.jenis_kue &&
-          rule.variasi === orderDetails.variasi_kue &&
-          rule.ukuran === orderDetails.ukuran_kue &&
-          rule.kotak === orderDetails.kotak_kue
+          (rule) =>
+              rule.jenis_kue === orderDetails.jenis_kue &&
+              rule.variasi === orderDetails.variasi_kue &&
+              rule.ukuran === orderDetails.ukuran_kue &&
+              rule.kotak === orderDetails.kotak_kue
       );
 
       // Hitung total biaya tambahan
       const totalBiayaTambahan = orderDetails.biaya_tambahan.reduce(
-        (sum, item) => {
-          return sum + parseFloat(item.harga_item) * parseInt(item.jumlah_item);
-        },
-        0
+          (sum, item) => {
+            return sum + parseFloat(item.harga_item) * parseInt(item.jumlah_item);
+          },
+          0
       );
 
-      // Handle file upload
-      let gambarBase64 = null;
-      if (orderDetails.gambar_model) {
-        const reader = new FileReader();
-        // Convert file to base64
-        await new Promise((resolve, reject) => {
-          reader.onload = resolve;
-          reader.onerror = reject;
-          reader.readAsDataURL(orderDetails.gambar_model);
-        });
-        gambarBase64 = reader.result;
+      // Konversi semua gambar ke base64
+      let gambarBase64Array = [];
+      if (orderDetails.gambar_model.length > 0) {
+        gambarBase64Array = await Promise.all(orderDetails.gambar_model.map(async (file) => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+          });
+        }));
       }
 
       const customCake = {
@@ -506,43 +515,43 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
         kotak_kue: orderDetails.kotak_kue,
         jumlah_pesanan: parseInt(orderDetails.jumlah_pesanan),
         catatan_request: orderDetails.catatan_request,
-        // Simpan harga_jual asli (tanpa dikalikan jumlah pesanan)
         harga_jual: matchingRule ? parseFloat(matchingRule.harga) : 0,
-        // Simpan modal asli (tanpa dikalikan jumlah pesanan)
         modal: matchingRule ? parseFloat(matchingRule.modal) : 0,
-        // Tambah field baru untuk total keseluruhan
-        total_harga: totalHarga, // Total harga sudah termasuk jumlah pesanan dan biaya tambahan
-        // Tambah field baru untuk total modal
+        total_harga: totalHarga,
         total_modal: matchingRule
-          ? parseFloat(matchingRule.modal) *
+            ? parseFloat(matchingRule.modal) *
             parseInt(orderDetails.jumlah_pesanan)
-          : 0,
+            : 0,
         biaya_tambahan: orderDetails.biaya_tambahan,
         total_biaya_tambahan: totalBiayaTambahan,
         tipe: "custom_cake",
-        // Tambahkan gambar model ke objek kue
-        gambar_model: gambarBase64
+        gambar_model: gambarBase64Array // Simpan array gambar base64
       };
 
       handleAddProduk(customCake);
 
       // Reset form
-      setOrderDetails({
-        jenis_kue: "",
-        variasi_kue: "",
-        ukuran_kue: "",
-        kotak_kue: "",
-        jumlah_pesanan: 1,
-        catatan_request: "",
-        gambar_model: null,
-        status: "pending",
-        biaya_tambahan: [],
-      });
+      resetCustomCakeForm();
       setIsCustomCakeOrderVisible(false);
     } catch (error) {
       console.error("Error submitting order:", error);
       alert("Gagal membuat pesanan");
     }
+  };
+
+  const resetCustomCakeForm = () => {
+    setOrderDetails({
+      jenis_kue: "",
+      variasi_kue: "",
+      ukuran_kue: "",
+      kotak_kue: "",
+      jumlah_pesanan: 1,
+      catatan_request: "",
+      gambar_model: [],
+      status: "pending",
+      biaya_tambahan: [],
+    });
+    setImagePreview([]);
   };
 
   const handleKueReadySubmit = async (formData) => {
@@ -567,22 +576,11 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
   // Fungsi untuk mengatur status tombol dan form
   const handleToggleCustomCakeOrder = () => {
     if (isCustomCakeOrderVisible) {
-      setOrderDetails({
-        jenis_kue: "",
-        variasi_kue: "",
-        ukuran_kue: "",
-        kotak_kue: "",
-        jumlah_pesanan: "",
-        biaya_tambahan: "",
-        tanggal_pengambilan: "",
-        jam_pengambilan: "",
-        catatan_biaya_tambahan: "",
-        catatan_request: "",
-        gambar_model: null,
-      });
+      resetCustomCakeForm();
     }
     setIsCustomCakeOrderVisible((prev) => !prev);
   };
+
   return (
     // Daftar Produk POS Nur Cake
     <section className="space-y-8">
@@ -731,19 +729,45 @@ const DaftarProduk = ({ handleAddProduk, selectedProduk, onKueReadyReturn, refre
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="gambar_model" className="text-[#DAA520]">
-                  Unggah Gambar Model
-                </Label>
+              <div className="mb-4">
+                <Label htmlFor="gambar_model" className="text-[#DAA520]">Gambar Model (Opsional):</Label>
                 <Input
-                  type="file"
-                  id="gambar_model"
-                  name="gambar_model"
-                  accept="image/*"
-                  onChange={handleOrderChange}
-                  className="bg-[#1a1a1a] text-[#DAA520] border-[#FFD700]"
+                    id="gambar_model"
+                    name="gambar_model"
+                    type="file"
+                    multiple // Tambahkan atribut multiple
+                    onChange={handleOrderChange}
+                    className="mt-1"
                 />
+                <div className="text-sm text-gray-500">
+                  Pilih beberapa gambar sebagai referensi model kue
+                </div>
               </div>
+
+              {/* Preview gambar */}
+              {imagePreview && imagePreview.length > 0 && (
+                  <div className="mt-2">
+                    <Label className="text-[#DAA520]">Preview Gambar Model:</Label>
+                    <div className="mt-1 grid grid-cols-2 gap-2">
+                      {imagePreview.map((preview, index) => (
+                          <div key={index} className="relative border rounded overflow-hidden">
+                            <img
+                                src={preview}
+                                alt={`Preview ${index+1}`}
+                                className="max-h-40 object-contain mx-auto"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveImage(index)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                      ))}
+                    </div>
+                  </div>
+              )}
             </div>
 
             {/* Form Biaya Tambahan */}

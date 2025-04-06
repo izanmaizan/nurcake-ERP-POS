@@ -42,7 +42,6 @@ const TransaksiPOSNurCake = ({
   const [notes, setNotes] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerNameError, setCustomerNameError] = useState(false);
-
   const [showCakeDetails, setShowCakeDetails] = useState(false);
   const [selectedCakeDetails, setSelectedCakeDetails] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -452,150 +451,6 @@ const TransaksiPOSNurCake = ({
       </tr>
     );
   };
-
-  {/* Dialog untuk menampilkan detail kue ready yang memiliki id_kue */}
-  // {showCakeDetails && selectedCakeDetails && (
-  //     <Dialog open={showDetails} onOpenChange={setShowDetails}>
-  //       <DialogContent className="sm:max-w-[700px] bg-[#2d2d2d] border-[#FFD700] border">
-  //         <DialogHeader>
-  //           <DialogTitle className="text-[#FFD700]">
-  //             {selectedItemDetails?.id_custom
-  //                 ? "Detail Kue Pesanan"
-  //                 : "Detail Kue"}
-  //           </DialogTitle>
-  //         </DialogHeader>
-  //         <div className="flex flex-col md:flex-row gap-6">
-  //           {/* Bagian kiri - Informasi */}
-  //           <div className="space-y-4 flex-1 text-[#DAA520]">
-  //             {selectedItemDetails?.id_custom ? (
-  //                 // Custom Cake Details dengan tambahan detail biaya
-  //                 <>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Jenis Kue:</strong>{" "}
-  //                     {selectedItemDetails.jenis_kue}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Variasi:</strong>{" "}
-  //                     {selectedItemDetails.variasi_kue}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Ukuran:</strong>{" "}
-  //                     {selectedItemDetails.ukuran_kue}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Kotak:</strong>{" "}
-  //                     {selectedItemDetails.kotak_kue}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Jumlah:</strong>{" "}
-  //                     {selectedItemDetails.jumlah_pesanan}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Catatan:</strong>{" "}
-  //                     {selectedItemDetails.catatan_request || "-"}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Harga Dasar:</strong> Rp{" "}
-  //                     {selectedItemDetails.harga_jual.toLocaleString()}
-  //                   </p>
-  //
-  //                   {/* Tampilkan daftar biaya tambahan */}
-  //                   {selectedItemDetails.biaya_tambahan &&
-  //                       selectedItemDetails.biaya_tambahan.length > 0 && (
-  //                           <div className="mt-4 bg-[#3d3d3d] p-4 rounded-lg">
-  //                             <p className="font-semibold text-[#FFD700]">
-  //                               Biaya Tambahan:
-  //                             </p>
-  //                             <div className="pl-4">
-  //                               {selectedItemDetails.biaya_tambahan.map(
-  //                                   (item, index) => (
-  //                                       <p key={index} className="text-sm">
-  //                                         {item.nama_item} ({item.jumlah_item}x) - Rp{" "}
-  //                                         {(
-  //                                             item.harga_item * item.jumlah_item
-  //                                         ).toLocaleString()}
-  //                                       </p>
-  //                                   )
-  //                               )}
-  //                             </div>
-  //                             <p className="mt-2">
-  //                               <strong className="text-[#FFD700]">
-  //                                 Total Biaya Tambahan:
-  //                               </strong>{" "}
-  //                               Rp{" "}
-  //                               {selectedItemDetails.total_biaya_tambahan.toLocaleString()}
-  //                             </p>
-  //                           </div>
-  //                       )}
-  //
-  //                   <div className="mt-4 pt-4 border-t border-[#FFD700]">
-  //                     <p className="font-semibold">
-  //                       <span className="text-[#FFD700]">Subtotal per Item:</span>{" "}
-  //                       Rp{" "}
-  //                       {(
-  //                           selectedItemDetails.total_harga /
-  //                           selectedItemDetails.jumlah_pesanan
-  //                       ).toLocaleString()}
-  //                     </p>
-  //                     <p className="font-semibold text-lg">
-  //                       <span className="text-[#FFD700]">Total Keseluruhan:</span>{" "}
-  //                       Rp {selectedItemDetails.total_harga.toLocaleString()}
-  //                     </p>
-  //                   </div>
-  //                 </>
-  //             ) : (
-  //                 // Ready Cake Details
-  //                 <>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Jenis Kue:</strong>{" "}
-  //                     {selectedItemDetails?.jenis_kue}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Variasi:</strong>{" "}
-  //                     {selectedItemDetails?.variasi_kue}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Ukuran:</strong>{" "}
-  //                     {selectedItemDetails?.ukuran_kue}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Nama di Kue:</strong>{" "}
-  //                     {selectedItemDetails?.cake_name || "-"}
-  //                   </p>
-  //                   <p>
-  //                     <strong className="text-[#FFD700]">Harga:</strong> Rp{" "}
-  //                     {selectedItemDetails?.harga_jual.toLocaleString()}
-  //                   </p>
-  //                 </>
-  //             )}
-  //           </div>
-  //
-  //           {/* Bagian kanan - Gambar */}
-  //           <div className="flex-1 flex items-center justify-center">
-  //             {selectedItemDetails?.gambar ? (
-  //                 <div className="w-full flex justify-center">
-  //                   <img
-  //                       src={`http://localhost:3000/${selectedItemDetails.gambar}`}
-  //                       alt="Gambar Kue"
-  //                       className="max-w-full h-auto rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
-  //                       onClick={() => {
-  //                         // Jika Anda ingin menambahkan fungsi preview gambar yang lebih besar
-  //                         if (typeof setSelectedImage === 'function') {
-  //                           setSelectedImage(`http://localhost:3000/${selectedItemDetails.gambar}`);
-  //                         }
-  //                       }}
-  //                   />
-  //                 </div>
-  //             ) : (
-  //                 <div className="bg-[#3d3d3d] w-full h-64 rounded-lg flex items-center justify-center border border-[#FFD700]">
-  //                   <span className="text-[#DAA520]">Tidak Ada Gambar</span>
-  //                 </div>
-  //             )}
-  //           </div>
-  //         </div>
-  //       </DialogContent>
-  //     </Dialog>
-  // )}
 
   const cetakLaporan = (pesanan) => {
     // Hitung tinggi yang dibutuhkan
@@ -1109,7 +964,6 @@ const TransaksiPOSNurCake = ({
       </CardContent>
 
       {/* Dialog untuk detail produk */}
-      {/* Dialog untuk detail produk */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="bg-[#2d2d2d] text-[#DAA520] border-[#FFD700] sm:max-w-[700px]">
           <DialogHeader>
@@ -1221,23 +1075,61 @@ const TransaksiPOSNurCake = ({
 
             {/* Bagian kanan - Gambar */}
             <div className="flex-1 flex items-center justify-center">
-              {(selectedItemDetails?.gambar || selectedItemDetails?.gambar_model) ? (
+              {selectedItemDetails ? (
                   <div className="w-full flex justify-center">
-                    <img
-                        src={selectedItemDetails?.gambar_model || `http://localhost:3000/${selectedItemDetails.gambar}`}
-                        alt="Gambar Kue"
-                        className="max-w-full h-auto rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
-                        onClick={() => {
-                          // Jika Anda ingin menambahkan fungsi preview gambar yang lebih besar
-                          if (typeof setSelectedImage === 'function') {
-                            setSelectedImage(selectedItemDetails?.gambar_model || `http://localhost:3000/${selectedItemDetails.gambar}`);
-                          }
-                        }}
-                    />
+                    {/* Penanganan untuk berbagai jenis data gambar */}
+                    {Array.isArray(selectedItemDetails.gambar_model) ? (
+                        // Jika ada multiple gambar (array)
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {selectedItemDetails.gambar_model.map((img, index) => (
+                              <img
+                                  key={index}
+                                  src={img}
+                                  alt={`Gambar Kue ${index + 1}`}
+                                  className="max-w-full max-h-32 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
+                                  onClick={() => {
+                                    // Jika Anda ingin menambahkan fungsi preview gambar yang lebih besar
+                                    if (typeof setSelectedImage === 'function') {
+                                      setSelectedImage(img);
+                                    }
+                                  }}
+                              />
+                          ))}
+                        </div>
+                    ) : selectedItemDetails.gambar_model ? (
+                        // Jika ada single gambar dari model
+                        <img
+                            src={selectedItemDetails.gambar_model}
+                            alt="Gambar Kue"
+                            className="max-w-full h-auto rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
+                            onClick={() => {
+                              if (typeof setSelectedImage === 'function') {
+                                setSelectedImage(selectedItemDetails.gambar_model);
+                              }
+                            }}
+                        />
+                    ) : selectedItemDetails.gambar ? (
+                        // Jika ada gambar dari path lokal
+                        <img
+                            src={`http://localhost:3000/${selectedItemDetails.gambar}`}
+                            alt="Gambar Kue"
+                            className="max-w-full h-auto rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
+                            onClick={() => {
+                              if (typeof setSelectedImage === 'function') {
+                                setSelectedImage(`http://localhost:3000/${selectedItemDetails.gambar}`);
+                              }
+                            }}
+                        />
+                    ) : (
+                        // Jika tidak ada gambar
+                        <div className="bg-[#3d3d3d] w-full h-64 rounded-lg flex items-center justify-center border border-[#FFD700]">
+                          <span className="text-[#DAA520]">Tidak Ada Gambar</span>
+                        </div>
+                    )}
                   </div>
               ) : (
                   <div className="bg-[#3d3d3d] w-full h-64 rounded-lg flex items-center justify-center border border-[#FFD700]">
-                    <span className="text-[#DAA520]">Tidak Ada Gambar</span>
+                    <span className="text-[#DAA520]">Tidak Ada Data</span>
                   </div>
               )}
             </div>
