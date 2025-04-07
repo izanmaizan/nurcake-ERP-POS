@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
-import { Trash2, Save, Plus, Printer } from "lucide-react";
+import { Trash2, Save, Plus, Printer, X } from "lucide-react";
 import { Textarea } from "../components/ui/textarea";
 import axios from "axios";
 import { jsPDF } from "jspdf";
@@ -46,6 +46,7 @@ const TransaksiPOSNurCake = ({
   const [selectedCakeDetails, setSelectedCakeDetails] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedItemDetails, setSelectedItemDetails] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   // Tambahkan state baru untuk Dialog konfirmasi
   const [showConfirmPaymentDialog, setShowConfirmPaymentDialog] =
@@ -175,7 +176,7 @@ const TransaksiPOSNurCake = ({
 
     if (jumlahDibayar > total) {
       setKembalian(metodePembayaran === "cash" ? jumlahDibayar - total : 0);
-      setStatusPembayaran("Berlebih");
+      setStatusPembayaran("Kembalian");
       setSisaHutang(0);
     } else if (jumlahDibayar < total) {
       setKembalian(0);
@@ -246,29 +247,75 @@ const TransaksiPOSNurCake = ({
   };
 
   // Fungsi untuk menyimpan pesanan (dipindahkan dari handleSimpanPesanan)
+  // Fungsi untuk menyimpan pesanan dengan gambar
   const simpanPesanan = async () => {
     try {
+      // Siapkan FormData untuk menangani upload file
+      const formData = new FormData();
+
+      // Proses item pesanan dan tambahkan gambar jika ada
       const formattedItems = selectedProduk.map((item) => {
         // Untuk kue request/custom cake
         if (item.tipe === "custom_cake") {
-          return {
+          // Klon item tanpa referensi gambar asli
+          const itemData = {
             id_custom: item.id_custom,
             jenis_kue: item.jenis_kue,
             variasi_kue: item.variasi_kue,
             ukuran_kue: item.ukuran_kue,
             kotak_kue: item.kotak_kue,
-            modal: item.modal, // Modal per item
-            harga_jual: item.harga_jual, // Harga jual per item
-            total_modal: item.total_modal, // Total modal setelah dikalikan jumlah
-            total_harga: item.total_harga, // Total harga setelah dikalikan jumlah
+            modal: item.modal,
+            harga_jual: item.harga_jual,
+            total_modal: item.total_modal,
+            total_harga: item.total_harga,
             jumlah_pesanan: item.jumlah_pesanan,
             biaya_tambahan: item.biaya_tambahan,
             total_biaya_tambahan: item.total_biaya_tambahan,
             tipe: "custom_cake",
+            gambar_model: [], // Array untuk menyimpan path gambar
           };
+
+          // Jika item memiliki gambar_model, proses untuk upload
+          if (item.gambar_model && item.gambar_model.length > 0) {
+            // Simpan referensi ke gambar_model untuk diproses nanti
+            itemData.gambar_model_refs = item.gambar_model.map((img, index) => {
+              // Buat identifier unik untuk setiap gambar
+              const imgKey = `cake_img_${item.id_custom}_${index}`;
+
+              // Jika gambar adalah File atau Blob, tambahkan ke FormData
+              if (img instanceof File || img instanceof Blob) {
+                formData.append(imgKey, img);
+              }
+              // Jika gambar sudah berupa string URL, gunakan langsung
+              else if (typeof img === 'string') {
+                // Jika URL sudah berupa path di server, gunakan saja
+                if (img.startsWith('uploads/')) {
+                  itemData.gambar_model.push(img);
+                }
+                // Jika URL adalah data URL, konversi ke file
+                else if (img.startsWith('data:')) {
+                  // Kode untuk konversi data URL ke File
+                  const byteString = atob(img.split(',')[1]);
+                  const mimeString = img.split(',')[0].split(':')[1].split(';')[0];
+                  const ab = new ArrayBuffer(byteString.length);
+                  const ia = new Uint8Array(ab);
+                  for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                  }
+                  const blob = new Blob([ab], { type: mimeString });
+                  const file = new File([blob], `cake_image_${Date.now()}.jpg`, { type: mimeString });
+                  formData.append(imgKey, file);
+                }
+              }
+
+              return imgKey;
+            });
+          }
+
+          return itemData;
         }
 
-        // Untuk kue ready
+        // Untuk kue ready dan produk reguler (tidak berubah)
         if (item.id_kue) {
           const total_modal = item.modal_pembuatan;
           const total_harga = item.harga_jual;
@@ -276,8 +323,8 @@ const TransaksiPOSNurCake = ({
           return {
             id_kue: item.id_kue,
             jenis_kue: item.jenis_kue,
-            modal_pembuatan: item.modal_pembuatan, // Modal per item
-            harga_jual: item.harga_jual, // Harga jual per item
+            modal_pembuatan: item.modal_pembuatan,
+            harga_jual: item.harga_jual,
             total_modal: total_modal,
             total_harga: total_harga,
             jumlah: 1,
@@ -293,8 +340,8 @@ const TransaksiPOSNurCake = ({
         return {
           id_produk: item.id_produk,
           nama_produk: item.nama_produk,
-          modal_produk: item.modal_produk, // Modal per item
-          harga_jual: item.harga_jual, // Harga jual per item
+          modal_produk: item.modal_produk,
+          harga_jual: item.harga_jual,
           jumlah: item.jumlah,
           total_modal: total_modal,
           total_harga: total_harga,
@@ -302,6 +349,7 @@ const TransaksiPOSNurCake = ({
         };
       });
 
+      // Data transaksi untuk dikirim ke backend
       const transaksiData = {
         tanggal_transaksi: tanggalTransaksi,
         tanggal_pengambilan: tanggalPengambilan,
@@ -316,10 +364,33 @@ const TransaksiPOSNurCake = ({
         additional_items: additionalItems,
       };
 
+      // Tambahkan data transaksi ke FormData
+      formData.append('data', JSON.stringify(transaksiData));
+
+      // Buat request ke endpoint yang mendukung multipart/form-data
       const response = await axios.post(
-        "http://localhost:3000/transaksi-nc",
-        transaksiData
+          "http://localhost:3000/transaksi-nc",
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }
       );
+
+      // Proses setelah transaksi berhasil tersimpan
+      if (response.data.imagePaths) {
+        // Update formattedItems dengan path gambar dari server
+        response.data.imagePaths.forEach((path, index) => {
+          const [itemIndex, imgIndex] = path.itemImageIds.split('_');
+          if (formattedItems[itemIndex] && formattedItems[itemIndex].tipe === "custom_cake") {
+            if (!formattedItems[itemIndex].gambar_model) {
+              formattedItems[itemIndex].gambar_model = [];
+            }
+            formattedItems[itemIndex].gambar_model[imgIndex] = path.serverPath;
+          }
+        });
+      }
 
       // Perbarui tampilan daftar kue ready setelah menghapus
       if (triggerKueReadyRefresh) {
@@ -336,7 +407,7 @@ const TransaksiPOSNurCake = ({
       handleJualProduk();
     } catch (error) {
       console.error("Error saat menyimpan pesanan:", error);
-      alert("Gagal menyimpan pesanan");
+      alert("Gagal menyimpan pesanan: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -1074,61 +1145,81 @@ const TransaksiPOSNurCake = ({
             </div>
 
             {/* Bagian kanan - Gambar */}
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1">
               {selectedItemDetails ? (
-                  <div className="w-full flex justify-center">
-                    {/* Penanganan untuk berbagai jenis data gambar */}
-                    {Array.isArray(selectedItemDetails.gambar_model) ? (
-                        // Jika ada multiple gambar (array)
-                        <div className="flex flex-wrap gap-2 justify-center">
-                          {selectedItemDetails.gambar_model.map((img, index) => (
-                              <img
-                                  key={index}
-                                  src={img}
-                                  alt={`Gambar Kue ${index + 1}`}
-                                  className="max-w-full max-h-32 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
-                                  onClick={() => {
-                                    // Jika Anda ingin menambahkan fungsi preview gambar yang lebih besar
-                                    if (typeof setSelectedImage === 'function') {
-                                      setSelectedImage(img);
-                                    }
-                                  }}
-                              />
+                  <div className="w-full flex flex-col gap-4">
+                    {/* Untuk custom cake dengan multiple gambar */}
+                    {selectedItemDetails.id_custom && selectedItemDetails.gambar_model && Array.isArray(selectedItemDetails.gambar_model) && selectedItemDetails.gambar_model.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-3">
+                          {selectedItemDetails.gambar_model.map((gambar, index) => (
+                              <div key={index} className="relative aspect-square overflow-hidden rounded-lg border-2 border-[#FFD700]">
+                                <img
+                                    src={typeof gambar === 'string' && gambar.startsWith('uploads/')
+                                        ? `http://localhost:3000/${gambar}`
+                                        : gambar}
+                                    alt={`Gambar Model ${index + 1}`}
+                                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => {
+                                      if (typeof setSelectedImage === 'function') {
+                                        const imageSrc = typeof gambar === 'string' && gambar.startsWith('uploads/')
+                                            ? `http://localhost:3000/${gambar}`
+                                            : gambar;
+                                        setSelectedImage(imageSrc);
+                                      }
+                                    }}
+                                />
+                              </div>
                           ))}
                         </div>
-                    ) : selectedItemDetails.gambar_model ? (
-                        // Jika ada single gambar dari model
-                        <img
-                            src={selectedItemDetails.gambar_model}
-                            alt="Gambar Kue"
-                            className="max-w-full h-auto rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
-                            onClick={() => {
-                              if (typeof setSelectedImage === 'function') {
-                                setSelectedImage(selectedItemDetails.gambar_model);
-                              }
-                            }}
-                        />
+                    ) : selectedItemDetails.id_custom && selectedItemDetails.gambar_model ? (
+                        // Untuk custom cake dengan satu gambar
+                        <div className="aspect-video rounded-lg overflow-hidden border-2 border-[#FFD700]">
+                          <img
+                              src={typeof selectedItemDetails.gambar_model === 'string' && selectedItemDetails.gambar_model.startsWith('uploads/')
+                                  ? `http://localhost:3000/${selectedItemDetails.gambar_model}`
+                                  : selectedItemDetails.gambar_model}
+                              alt="Gambar Kue"
+                              className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                if (typeof setSelectedImage === 'function') {
+                                  const imageSrc = typeof selectedItemDetails.gambar_model === 'string' && selectedItemDetails.gambar_model.startsWith('uploads/')
+                                      ? `http://localhost:3000/${selectedItemDetails.gambar_model}`
+                                      : selectedItemDetails.gambar_model;
+                                  setSelectedImage(imageSrc);
+                                }
+                              }}
+                          />
+                        </div>
                     ) : selectedItemDetails.gambar ? (
-                        // Jika ada gambar dari path lokal
-                        <img
-                            src={`http://localhost:3000/${selectedItemDetails.gambar}`}
-                            alt="Gambar Kue"
-                            className="max-w-full h-auto rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-[#FFD700]"
-                            onClick={() => {
-                              if (typeof setSelectedImage === 'function') {
-                                setSelectedImage(`http://localhost:3000/${selectedItemDetails.gambar}`);
-                              }
-                            }}
-                        />
+                        // Untuk kue ready dengan gambar
+                        <div className="aspect-video rounded-lg overflow-hidden border-2 border-[#FFD700]">
+                          <img
+                              src={`http://localhost:3000/${selectedItemDetails.gambar}`}
+                              alt="Gambar Kue"
+                              className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                if (typeof setSelectedImage === 'function') {
+                                  setSelectedImage(`http://localhost:3000/${selectedItemDetails.gambar}`);
+                                }
+                              }}
+                          />
+                        </div>
                     ) : (
                         // Jika tidak ada gambar
-                        <div className="bg-[#3d3d3d] w-full h-64 rounded-lg flex items-center justify-center border border-[#FFD700]">
+                        <div className="bg-[#3d3d3d] w-full aspect-video rounded-lg flex items-center justify-center border-2 border-[#FFD700]">
                           <span className="text-[#DAA520]">Tidak Ada Gambar</span>
                         </div>
                     )}
+
+                    {/* Tambahan caption untuk gambar */}
+                    {(selectedItemDetails.id_custom && selectedItemDetails.gambar_model) || selectedItemDetails.gambar ? (
+                        <p className="text-center text-sm text-[#DAA520] italic mt-2">
+                          Klik gambar untuk memperbesar
+                        </p>
+                    ) : null}
                   </div>
               ) : (
-                  <div className="bg-[#3d3d3d] w-full h-64 rounded-lg flex items-center justify-center border border-[#FFD700]">
+                  <div className="bg-[#3d3d3d] w-full aspect-video rounded-lg flex items-center justify-center border-2 border-[#FFD700]">
                     <span className="text-[#DAA520]">Tidak Ada Data</span>
                   </div>
               )}
@@ -1137,10 +1228,28 @@ const TransaksiPOSNurCake = ({
         </DialogContent>
       </Dialog>
 
+      {/* Dialog untuk memperbesar gambar - PERBAIKAN: Ditambahkan DialogTitle */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="bg-[#2d2d2d] max-w-5xl p-0">
+          <DialogHeader className="absolute top-0 left-0 right-0 z-10 bg-black bg-opacity-50 p-4">
+            <DialogTitle className="text-[#FFD700]">
+              Detail Gambar Kue
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center items-center w-full h-full">
+            <img
+                src={selectedImage}
+                alt="Gambar Kue Diperbesar"
+                className="w-full h-full object-contain"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog untuk konfirmasi pembayaran kurang */}
       <Dialog
-        open={showConfirmPaymentDialog}
-        onOpenChange={setShowConfirmPaymentDialog}>
+          open={showConfirmPaymentDialog}
+          onOpenChange={setShowConfirmPaymentDialog}>
         <DialogContent className="bg-[#2d2d2d] border-[#FFD700] border">
           <DialogHeader>
             <DialogTitle className="text-[#FFD700]">
@@ -1160,16 +1269,16 @@ const TransaksiPOSNurCake = ({
           </div>
           <div className="flex justify-end space-x-4 mt-4">
             <Button
-              onClick={() => setShowConfirmPaymentDialog(false)}
-              className="bg-[#3d3d3d] text-[#DAA520] border-[#FFD700] hover:bg-[#DAA520] hover:text-[#3d3d3d] transition-colors">
+                onClick={() => setShowConfirmPaymentDialog(false)}
+                className="bg-[#3d3d3d] text-[#DAA520] border-[#FFD700] hover:bg-[#DAA520] hover:text-[#3d3d3d] transition-colors">
               Batal
             </Button>
             <Button
-              onClick={() => {
-                setShowConfirmPaymentDialog(false);
-                simpanPesanan();
-              }}
-              className="bg-[#FFD700] text-black hover:bg-[#F0C000] hover:border-[#F0C000] transition-colors">
+                onClick={() => {
+                  setShowConfirmPaymentDialog(false);
+                  simpanPesanan();
+                }}
+                className="bg-[#FFD700] text-black hover:bg-[#F0C000] hover:border-[#F0C000] transition-colors">
               OK
             </Button>
           </div>

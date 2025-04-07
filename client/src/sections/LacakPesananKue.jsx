@@ -17,6 +17,7 @@ const LacakPesananKue = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [filterDate, setFilterDate] = useState("");
+  const [previewImage, setPreviewImage] = useState(null);
   const [selectedOrderStatus, setSelectedOrderStatus] = useState("");
 
   useEffect(() => {
@@ -115,33 +116,50 @@ const LacakPesananKue = () => {
   });
 
   const renderCustomCakeDetails = (order) => {
-    const customCakeItem = order.items.find(
-      (item) => item.tipe === "custom_cake"
-    );
+    const customCakeItem = order.items.find((item) => item.tipe === "custom_cake");
+
     return customCakeItem ? (
-      <>
-        <p className="text-sm text-[#FFD700]">Spesifikasi</p>
-        <div className="mt-2 space-y-2">
-          <p className="flex items-center text-[#DAA520]">
-            <Cake className="w-4 h-4 mr-2" />
-            Jenis Kue: {customCakeItem.jenis_kue}
-          </p>
-          <p className="flex items-center text-[#DAA520]">
-            <Package className="w-4 h-4 mr-2" />
-            Ukuran: {customCakeItem.ukuran_kue}
-          </p>
-          <p className="flex items-center text-[#DAA520]">
-            <Coffee className="w-4 h-4 mr-2" />
-            Variasi: {customCakeItem.variasi_kue}
-          </p>
-          <p className="flex items-center text-[#DAA520]">
-            <Box className="w-4 h-4 mr-2" />
-            Kotak: {customCakeItem.kotak_kue}
-          </p>
-        </div>
-      </>
+        <>
+          <p className="text-sm text-[#FFD700]">Spesifikasi</p>
+          <div className="mt-2 space-y-2">
+            <p className="flex items-center text-[#DAA520]">
+              <Cake className="w-4 h-4 mr-2" />
+              Jenis Kue: {customCakeItem.jenis_kue}
+            </p>
+            <p className="flex items-center text-[#DAA520]">
+              <Package className="w-4 h-4 mr-2" />
+              Ukuran: {customCakeItem.ukuran_kue}
+            </p>
+            <p className="flex items-center text-[#DAA520]">
+              <Coffee className="w-4 h-4 mr-2" />
+              Variasi: {customCakeItem.variasi_kue}
+            </p>
+            <p className="flex items-center text-[#DAA520]">
+              <Box className="w-4 h-4 mr-2" />
+              Kotak: {customCakeItem.kotak_kue}
+            </p>
+          </div>
+
+          {customCakeItem.gambar_model?.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm text-[#FFD700] mb-2">Gambar Model</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {customCakeItem.gambar_model.map((src, index) => (
+                      <img
+                          key={index}
+                          src={`http://localhost:3000/${src}`}
+                          alt={`gambar-model-${index}`}
+                          onClick={() => setPreviewImage(`http://localhost:3000/${src}`)}
+                          className="w-full h-32 object-cover rounded-lg border border-[#DAA520] cursor-pointer hover:scale-105 transition-transform"
+                      />
+                  ))}
+                </div>
+              </div>
+          )}
+        </>
     ) : null;
   };
+
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
@@ -172,6 +190,42 @@ const LacakPesananKue = () => {
       alert("Gagal memperbarui status pesanan");
     }
   };
+
+  const renderAdditionalItems = (order) => {
+    // Gabungkan semua biaya tambahan dari items dan additional_items
+    const fromItems = order.items
+        .flatMap((item) => item.biaya_tambahan || [])
+        .map((item) => ({
+          nama: item.nama_item,
+          jumlah: item.jumlah_item,
+          harga: Number(item.harga_item),
+        }));
+
+    const fromAdditional = (order.additional_items || []).map((item) => ({
+      nama: item.nama,
+      jumlah: item.jumlah,
+      harga: Number(item.harga),
+    }));
+
+    const combined = [...fromItems, ...fromAdditional];
+
+    if (combined.length === 0) return null;
+
+    return (
+        <div className="mt-6">
+          <p className="text-sm text-[#FFD700] mb-2">Detail Item Tambahan</p>
+          <ul className="space-y-2">
+            {combined.map((item, idx) => (
+                <li key={idx} className="text-[#DAA520]">
+                  - {item.jumlah} x {item.nama ? ` (${item.nama}) = ` : ""}
+                  {formatPrice(item.harga)}
+                </li>
+            ))}
+          </ul>
+        </div>
+    );
+  };
+
 
   return (
     // LacakPesananKue
@@ -347,6 +401,7 @@ const LacakPesananKue = () => {
                     </div>
 
                     {renderCustomCakeDetails(selectedOrder)}
+                    {renderAdditionalItems(selectedOrder)}
 
                     <div className="space-y-4">
                       <div>
@@ -421,6 +476,26 @@ const LacakPesananKue = () => {
           </div>
         </div>
       </div>
+
+      {previewImage && (
+          <div
+              onClick={() => setPreviewImage(null)}
+              className="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center"
+          >
+            <img
+                src={previewImage}
+                alt="Preview Gambar"
+                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            />
+            <button
+                onClick={() => setPreviewImage(null)}
+                className="absolute top-4 right-4 text-white text-2xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+      )}
+
     </section>
   );
 };
