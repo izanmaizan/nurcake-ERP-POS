@@ -197,7 +197,7 @@ const ProdukNurCake = () => {
                     <th className="px-3 py-3 text-left text-sm font-medium md:px-4 md:py-3 md:text-base">Kategori</th>
                     <th className="px-3 py-3 text-left text-sm font-medium md:px-4 md:py-3 md:text-base">Modal Produk</th>
                     <th className="px-3 py-3 text-left text-sm font-medium md:px-4 md:py-3 md:text-base">Harga Produk</th>
-                    <th className="px-3 py-3 text-left text-sm font-medium md:px-4 md:py-3 md:text-base">Jumlah Stok</th>
+                    {/*<th className="px-3 py-3 text-left text-sm font-medium md:px-4 md:py-3 md:text-base">Jumlah Stok</th>*/}
                     <th className="px-3 py-3 text-left text-sm font-medium md:px-4 md:py-3 md:text-base">Gambar</th>
                     <th className="px-3 py-3 text-center text-sm font-medium md:px-4 md:py-3 md:text-base min-w-[120px]">Aksi</th>
                   </tr>
@@ -221,9 +221,9 @@ const ProdukNurCake = () => {
                             <td className="px-3 py-3 text-sm md:px-4 md:py-3 md:text-base">
                               {produk.harga_jual}
                             </td>
-                            <td className="px-3 py-3 text-sm md:px-4 md:py-3 md:text-base">
-                              {produk.jumlah_stok}
-                            </td>
+                            {/*<td className="px-3 py-3 text-sm md:px-4 md:py-3 md:text-base">*/}
+                            {/*  {produk.jumlah_stok}*/}
+                            {/*</td>*/}
                             <td className="px-3 py-3 md:px-4 md:py-3">
                               {produk.gambar ? (
                                   <div>
