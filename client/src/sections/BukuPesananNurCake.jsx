@@ -6,6 +6,8 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
 const BukuPesananNurCake = () => {
+  const API = import.meta.env.VITE_API;
+
   const [pesananList, setPesananList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,7 +46,7 @@ const BukuPesananNurCake = () => {
 
   const fetchPesananData = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/transaksi-nc");
+      const response = await axios.get(`${API}/transaksi-nc`);
       setPesananList(response.data);
       setLoading(false);
     } catch (error) {
@@ -92,7 +94,7 @@ const BukuPesananNurCake = () => {
 
   const handleUpdateTransaksi = async (id, updates) => {
     try {
-      await axios.put(`http://localhost:3000/transaksi-nc/${id}`, updates);
+      await axios.put(`${API}/transaksi-nc/${id}`, updates);
       fetchPesananData();
       // Tampilkan notifikasi
       setNotification({
@@ -163,7 +165,7 @@ const BukuPesananNurCake = () => {
     try {
       const pesanan = pesananList.find((p) => p.id_transaksi === id);
       if (pesanan) {
-        await axios.put(`http://localhost:3000/transaksi-nc/${id}`, {
+        await axios.put(`${API}/transaksi-nc/${id}`, {
           ...pesanan,
           status_kue: status,
         });
@@ -229,23 +231,23 @@ const BukuPesananNurCake = () => {
     if (!item.biaya_tambahan || item.biaya_tambahan.length === 0) return null;
 
     return (
-      <div className="ml-4 text-sm text-gray-600">
-        <p className="font-semibold">Biaya Tambahan:</p>
-        {item.biaya_tambahan.map((biaya, idx) => (
-          <div key={idx} className="flex justify-between">
-            <span>
-              {biaya.nama_item} ({biaya.jumlah_item}x)
-            </span>
-            <span>
-              Rp {(biaya.jumlah_item * biaya.harga_item).toLocaleString()}
-            </span>
+        <div className="ml-4 text-sm text-[#B8A361]">
+          <p className="font-semibold">Biaya Tambahan:</p>
+          {item.biaya_tambahan.map((biaya, idx) => (
+              <div key={idx} className="flex justify-between">
+          <span>
+            {biaya.nama_item} ({biaya.jumlah_item}x)
+          </span>
+                <span>
+            Rp {(biaya.jumlah_item * biaya.harga_item).toLocaleString()}
+          </span>
+              </div>
+          ))}
+          <div className="font-semibold">
+            Total Biaya Tambahan: Rp{" "}
+            {item.total_biaya_tambahan?.toLocaleString() || "0"}
           </div>
-        ))}
-        <div className="font-semibold">
-          Total Biaya Tambahan: Rp{" "}
-          {item.total_biaya_tambahan?.toLocaleString() || "0"}
         </div>
-      </div>
     );
   };
 
@@ -253,23 +255,23 @@ const BukuPesananNurCake = () => {
     if (!additionalItems || additionalItems.length === 0) return null;
 
     return (
-      <div className="mt-2">
-        <p className="font-semibold">Biaya Tambahan Lainnya:</p>
-        {additionalItems.map((item, idx) => (
-          <div key={idx} className="flex justify-between">
-            <span>
-              {item.nama} ({item.jumlah}x)
-            </span>
-            <span>Rp {(item.jumlah * item.harga).toLocaleString()}</span>
+        <div className="mt-2 text-[#B8A361]">
+          <p className="font-semibold">Biaya Tambahan Lainnya:</p>
+          {additionalItems.map((item, idx) => (
+              <div key={idx} className="flex justify-between">
+          <span>
+            {item.nama} ({item.jumlah}x)
+          </span>
+                <span>Rp {(item.jumlah * item.harga).toLocaleString()}</span>
+              </div>
+          ))}
+          <div className="font-semibold">
+            Total: Rp{" "}
+            {additionalItems
+                .reduce((sum, item) => sum + item.jumlah * item.harga, 0)
+                .toLocaleString()}
           </div>
-        ))}
-        <div className="font-semibold">
-          Total: Rp{" "}
-          {additionalItems
-            .reduce((sum, item) => sum + item.jumlah * item.harga, 0)
-            .toLocaleString()}
         </div>
-      </div>
     );
   };
 
@@ -531,45 +533,41 @@ const BukuPesananNurCake = () => {
         >
           <div
               className={`
-            w-12 h-6 rounded-full relative transition-all duration-300 ease-in-out
-            ${isPickedUp ? 'bg-green-500' : 'bg-red-500'}
-          `}
+          w-12 h-6 rounded-full relative transition-all duration-300 ease-in-out
+          ${isPickedUp ? 'bg-[#B8A361]' : 'bg-[#8B7D3F]'}
+        `}
           >
             <div
                 className={`
-              absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white 
-              shadow-md transition-all duration-300 ease-in-out
-              ${isPickedUp ? 'translate-x-6' : 'translate-x-1'}
-            `}
+            absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#FAF3E0] 
+            shadow-md transition-all duration-300 ease-in-out
+            ${isPickedUp ? 'translate-x-6' : 'translate-x-1'}
+          `}
             >
               {isPickedUp ? (
-                  <Check className="w-4 h-4 text-green-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  <Check className="w-4 h-4 text-[#B8A361] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               ) : (
-                  <X className="w-4 h-4 text-red-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  <X className="w-4 h-4 text-[#8B7D3F] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               )}
             </div>
           </div>
-          {/*tombol dijemput atau belum*/}
-        {/*  <span className={`ml-2 text-sm ${isPickedUp ? 'text-green-600' : 'text-red-600'}`}>*/}
-        {/*  {isPickedUp ? "Dijemput" : "Belum Dijemput"}*/}
-        {/*</span>*/}
         </div>
     );
   };
 
 
   return (
-    // Buku Pesanan Kue
-      <section className="bg-[#1a1a1a] py-16 px-5 min-h-screen w-full md:py-20 md:px-20">
+      // Buku Pesanan Kue
+      <section className="bg-[#FAF3E0] py-16 px-5 min-h-screen w-full md:py-20 md:px-20 mt-4">
         {msg && (
-            <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-4">
+            <div className="bg-[#B8A361] border border-[#8B7D3F] text-[#FAF3E0] px-4 py-3 rounded mb-4">
               {msg}
             </div>
         )}
 
         {notification.show && (
             <div
-                className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-transform duration-300 transform translate-y-0`}
+                className="fixed top-0 left-0 right-0 z-50 flex justify-center transition-transform duration-300 transform translate-y-0"
                 onTouchStart={(e) => {
                   const touch = e.touches[0];
                   const startY = touch.clientY;
@@ -597,8 +595,8 @@ const BukuPesananNurCake = () => {
               <div
                   className={`px-6 py-3 rounded-b-lg shadow-lg flex items-center justify-between ${
                       notification.type === "success"
-                          ? "bg-green-900 text-green-200"
-                          : "bg-red-900 text-red-200"
+                          ? "bg-[#B8A361] text-[#FAF3E0]"
+                          : "bg-[#8B7D3F] text-[#FAF3E0]"
                   }`}>
                 <div className="flex items-center">
                   {notification.type === "success" ? (
@@ -610,7 +608,7 @@ const BukuPesananNurCake = () => {
                 </div>
                 <button
                     onClick={() => setNotification({...notification, show: false})}
-                    className="ml-4 text-gray-300 hover:text-white">
+                    className="ml-4 text-[#FAF3E0] hover:text-white">
                   <X size={18}/>
                 </button>
               </div>
@@ -618,34 +616,34 @@ const BukuPesananNurCake = () => {
         )}
 
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-[#FFD700]">
+          <h1 className="text-3xl font-bold text-[#8B7D3F]">
             Buku Pesanan NurCake
           </h1>
           <Link
               to="/pos-nc"
-              className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded hover:bg-[#DAA520]">
+              className="bg-[#D4AF37] text-[#FAF3E0] px-4 py-2 rounded hover:bg-[#C5B358]">
             Tambah Pesanan
           </Link>
         </div>
 
-        <div className="w-full bg-[#2d2d2d] rounded-lg p-2 space-y-2 mb-2">
+        <div className="w-full bg-[#FFF8E7] rounded-lg p-2 space-y-2 mb-2 shadow-md">
           {/* Baris pertama: Pencarian dan Status */}
-          <div className="flex space-x-2">
+          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
             <div className="relative flex-grow">
               <input
                   type="text"
                   placeholder="Cari nama pemesan..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full py-2 px-8 bg-[#3d3d3d] border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#DAA520] text-[#FFD700] text-sm"
+                  className="w-full py-2 px-8 bg-[#FAF3E0] border border-[#D4AF37] rounded-lg focus:ring-2 focus:ring-[#C5B358] text-[#8B7D3F] text-sm"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#DAA520]" size={18}/>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B8A361]" size={18}/>
             </div>
 
             <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="py-2 px-3 bg-[#3d3d3d] border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#DAA520] text-[#FFD700] text-sm min-w-[150px]"
+                className="py-2 px-3 bg-[#FAF3E0] border border-[#D4AF37] rounded-lg focus:ring-2 focus:ring-[#C5B358] text-[#8B7D3F] text-sm min-w-[150px]"
             >
               <option value="all">Semua Status</option>
               <option value="Belum Lunas">Belum Lunas</option>
@@ -655,15 +653,15 @@ const BukuPesananNurCake = () => {
           </div>
 
           {/* Baris kedua: Filter Tanggal */}
-          <div className="flex space-x-2 w-full overflow-x-auto">
+          <div className="flex space-x-2 w-full overflow-x-auto pb-2">
             {/* Tombol Hari Ini */}
             <button
                 onClick={() => handleDateFilterChange(getTodayDate())}
                 className={`px-12 py-2 rounded-md text-xs transition-all duration-300 flex-shrink-0
-        ${filterDate === getTodayDate()
-                    ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
-                    : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
-      `}
+            ${filterDate === getTodayDate()
+                    ? 'bg-[#D4AF37] text-[#FAF3E0] shadow-md'
+                    : 'text-[#8B7D3F] border border-[#D4AF37] hover:bg-[#FFF8E7]'}
+          `}
             >
               Hari Ini
             </button>
@@ -673,10 +671,10 @@ const BukuPesananNurCake = () => {
               <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
                   className={`w-full px-3 py-2 rounded-md text-xs transition-all duration-300 flex items-center justify-center
-          ${showDatePicker
-                      ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
-                      : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
-        `}
+              ${showDatePicker
+                      ? 'bg-[#D4AF37] text-[#FAF3E0] shadow-md'
+                      : 'text-[#8B7D3F] border border-[#D4AF37] hover:bg-[#FFF8E7]'}
+            `}
               >
                 <Search className="mr-2" size={16}/>
                 {filterDate ? formatDate(filterDate) : 'Pilih Tanggal'}
@@ -684,7 +682,7 @@ const BukuPesananNurCake = () => {
 
               {showDatePicker && (
                   <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#2d2d2d] rounded-lg p-6 border border-[#FFD700] max-w-sm w-full">
+                    <div className="bg-[#FFF8E7] rounded-lg p-6 border border-[#D4AF37] max-w-sm w-full">
                       <input
                           type="date"
                           value={filterDate}
@@ -692,11 +690,11 @@ const BukuPesananNurCake = () => {
                             handleDateFilterChange(e.target.value);
                             setShowDatePicker(false);
                           }}
-                          className="w-full bg-[#3d3d3d] border border-[#FFD700] rounded-md p-2 text-[#DAA520]"
+                          className="w-full bg-[#FAF3E0] border border-[#D4AF37] rounded-md p-2 text-[#8B7D3F]"
                       />
                       <button
                           onClick={() => setShowDatePicker(false)}
-                          className="mt-4 w-full bg-[#FFD700] text-[#1a1a1a] py-2 rounded-md"
+                          className="mt-4 w-full bg-[#D4AF37] text-[#FAF3E0] py-2 rounded-md hover:bg-[#C5B358]"
                       >
                         Tutup
                       </button>
@@ -711,10 +709,10 @@ const BukuPesananNurCake = () => {
                     key={index}
                     onClick={() => handleDateFilterChange(day.dateString)}
                     className={`flex-shrink-0 min-w-[50px] px-12 py-2 text-xs rounded-md transition-all duration-300
-          ${filterDate === day.dateString
-                        ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
-                        : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
-        `}
+              ${filterDate === day.dateString
+                        ? 'bg-[#D4AF37] text-[#FAF3E0] shadow-md'
+                        : 'text-[#8B7D3F] border border-[#D4AF37] hover:bg-[#FFF8E7]'}
+            `}
                 >
                   <div className="flex flex-col items-center w-full">
                     <span className="font-bold uppercase text-xs">{day.dayName.slice(0, 3)}</span>
@@ -735,10 +733,10 @@ const BukuPesananNurCake = () => {
                   }
                 }}
                 className={`flex-shrink-0 px-12 py-2 rounded-md text-xs transition-all duration-300 
-        ${showAllDates
-                    ? 'bg-[#FFD700] text-[#1a1a1a] shadow-md'
-                    : 'text-[#DAA520] hover:bg-[#3d3d3d]'}
-      `}
+            ${showAllDates
+                    ? 'bg-[#D4AF37] text-[#FAF3E0] shadow-md'
+                    : 'text-[#8B7D3F] border border-[#D4AF37] hover:bg-[#FFF8E7]'}
+          `}
             >
               {showAllDates ? 'Tutup' : 'Semua'}
             </button>
@@ -746,26 +744,26 @@ const BukuPesananNurCake = () => {
         </div>
 
         {loading ? (
-            <div className="text-center py-4 text-[#DAA520]">Memuat...</div>
+            <div className="text-center py-4 text-[#8B7D3F]">Memuat...</div>
         ) : (
-            <div className="bg-[#2d2d2d] rounded-lg shadow overflow-x-auto border border-[#FFD700]">
+            <div className="bg-[#FFF8E7] rounded-lg shadow overflow-x-auto border border-[#D4AF37]">
               <table className="min-w-full">
                 <thead>
-                <tr className="bg-[#3d3d3d]">
-                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                <tr className="bg-[#E6BE8A]">
+                  <th className="px-4 py-3 text-left text-[#8B7D3F] font-bold">
                     Tanggal Ambil
                   </th>
-                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                  <th className="px-4 py-3 text-left text-[#8B7D3F] font-bold">
                     Atas Nama
                   </th>
-                  <th className="px-4 py-3 text-left text-[#FFD700]">Pesanan</th>
-                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                  <th className="px-4 py-3 text-left text-[#8B7D3F] font-bold">Pesanan</th>
+                  <th className="px-4 py-3 text-left text-[#8B7D3F] font-bold">
                     Status Bayar
                   </th>
-                  <th className="px-4 py-3 text-left text-[#FFD700]">
+                  <th className="px-4 py-3 text-left text-[#8B7D3F] font-bold">
                     Status Kue
                   </th>
-                  <th className="px-4 py-3 text-left text-[#FFD700]">Aksi</th>
+                  <th className="px-4 py-3 text-left text-[#8B7D3F] font-bold">Aksi</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -776,28 +774,28 @@ const BukuPesananNurCake = () => {
                   return (
                       <tr
                           key={pesanan.id_transaksi}
-                          className={`border-t border-[#FFD700]/30 ${
+                          className={`border-t border-[#E6BE8A]/30 ${
                               pickupStatus[pesanan.id_transaksi]
                                   ? "opacity-50"
                                   : ""
                           }`}>
-                        <td className="px-4 py-3 text-[#DAA520]">
+                        <td className="px-4 py-3 text-[#8B7D3F]">
                           <div>
-                        <span className="block text-xs text-[#DAA520]/70">
-                          Transaksi: {formatDate(pesanan.tanggal_transaksi)}
-                        </span>
+                    <span className="block text-xs text-[#B8A361]/70">
+                      Transaksi: {formatDate(pesanan.tanggal_transaksi)}
+                    </span>
                             <span className="block font-semibold">
-                          {formatDate(pesanan.tanggal_pengambilan)}
-                        </span>
-                            <span className="block text-sm text-[#DAA520]">
-                          Jam: {pesanan.waktu_pengambilan}
-                        </span>
+                      {formatDate(pesanan.tanggal_pengambilan)}
+                    </span>
+                            <span className="block text-sm text-[#8B7D3F]">
+                      Jam: {pesanan.waktu_pengambilan}
+                    </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[#DAA520]">
+                        <td className="px-4 py-3 text-[#8B7D3F]">
                           {pesanan.atas_nama}
                         </td>
-                        <td className="px-4 py-3 text-[#DAA520]">
+                        <td className="px-4 py-3 text-[#8B7D3F]">
                           {pesanan.items.map((item, index) => (
                               <div key={index} className="mb-1">
                                 {item.jenis_kue || item.nama_produk} -{" "}
@@ -805,19 +803,19 @@ const BukuPesananNurCake = () => {
                                 {item.harga_jual.toLocaleString()}
                               </div>
                           ))}
-                          <div className="font-bold mt-2 text-right text-[#FFD700]">
+                          <div className="font-bold mt-2 text-right text-[#8B7D3F]">
                             Total: Rp {pesanan.total_harga.toLocaleString()}
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                      <span
-                          className={`px-2 py-1 rounded ${
-                              pesanan.status_pembayaran === "Dijemput"
-                                  ? "bg-green-900 text-green-200"
-                                  : "bg-yellow-900 text-yellow-200"
-                          }`}>
-                        {pesanan.status_pembayaran}
-                      </span>
+                  <span
+                      className={`px-2 py-1 rounded ${
+                          pesanan.status_pembayaran === "Dijemput"
+                              ? "bg-[#C5B358] text-[#FAF3E0]"
+                              : "bg-[#E6BE8A] text-[#8B7D3F]"
+                      }`}>
+                    {pesanan.status_pembayaran}
+                  </span>
                         </td>
                         <td className="px-4 py-3">
                           {hasCustomCake ? (
@@ -830,22 +828,22 @@ const BukuPesananNurCake = () => {
                                             e.target.value
                                         )
                                     }
-                                    className="w-full py-2 px-3 bg-[#3d3d3d] border border-[#FFD700] rounded-lg focus:ring-2 focus:ring-[#DAA520] text-[#FFD700]">
+                                    className="w-full py-2 px-3 bg-[#FAF3E0] border border-[#D4AF37] rounded-lg focus:ring-2 focus:ring-[#C5B358] text-[#8B7D3F]">
                                   <option value="menunggu">Menunggu</option>
                                   <option value="diproses">Diproses</option>
                                   <option value="selesai">Selesai</option>
                                 </select>
                               </div>
                           ) : (
-                              <span className="text-[#DAA520]">
-                          Tidak ada kue request
-                        </span>
+                              <span className="text-[#8B7D3F]">
+                      Tidak ada kue request
+                    </span>
                           )}
                         </td>
                         <td className="px-4 py-8 flex items-center space-x-2">
                           <button
                               onClick={() => setDetailLengkap(pesanan)}
-                              className="bg-[#FFD700] text-[#1a1a1a] px-3 py-1 rounded text-sm mr-2 hover:bg-[#DAA520]"
+                              className="bg-[#D4AF37] text-[#FAF3E0] px-3 py-1 rounded text-sm mr-2 hover:bg-[#C5B358]"
                               title="Lihat Detail Pesanan">
                             Detail
                           </button>
@@ -863,66 +861,66 @@ const BukuPesananNurCake = () => {
         {detailLengkap && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center pt-28 md:pt-12">
               <div
-                  className="bg-[#2d2d2d] rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-[#FFD700]">
-                <div className="flex justify-between items-center mb-4 p-6 pb-0">
-                  <h2 className="text-2xl font-bold text-[#FFD700]">
+                  className="bg-[#FFF8E7] rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-[#D4AF37]">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-4 p-6 pb-0">
+                  <h2 className="text-2xl font-bold text-[#8B7D3F] mb-2 md:mb-0">
                     Detail Pesanan
                   </h2>
                   <button
                       onClick={() => cetakLaporan(detailLengkap)}
-                      className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded flex items-center hover:bg-[#DAA520]">
+                      className="bg-[#D4AF37] text-[#FAF3E0] px-4 py-2 rounded flex items-center hover:bg-[#C5B358] w-full md:w-auto justify-center">
                     <Printer className="mr-2" size={18}/> Cetak Laporan
                   </button>
                 </div>
 
-                <div className="overflow-y-auto px-6 py-4 space-y-4 text-[#DAA520]">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="overflow-y-auto px-6 py-4 space-y-4 text-[#8B7D3F]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="font-semibold text-[#FFD700]">ID Transaksi</p>
-                      <p className="text-[#DAA520]">{detailLengkap.id_transaksi}</p>
+                      <p className="font-semibold text-[#8B7D3F]">ID Transaksi</p>
+                      <p className="text-[#B8A361]">{detailLengkap.id_transaksi}</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-[#FFD700]">
+                      <p className="font-semibold text-[#8B7D3F]">
                         Tanggal Transaksi
                       </p>
-                      <p className="text-[#DAA520]">
+                      <p className="text-[#B8A361]">
                         {formatDate(detailLengkap.tanggal_transaksi)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="font-semibold text-[#FFD700]">
+                      <p className="font-semibold text-[#8B7D3F]">
                         Metode Pembayaran
                       </p>
-                      <p className="text-[#DAA520]">
+                      <p className="text-[#B8A361]">
                         {detailLengkap.metode_pembayaran}
                       </p>
                     </div>
                     <div>
-                      <p className="font-semibold text-[#FFD700]">Nama Pemesan</p>
-                      <p className="text-[#DAA520]">{detailLengkap.atas_nama}</p>
+                      <p className="font-semibold text-[#8B7D3F]">Nama Pemesan</p>
+                      <p className="text-[#B8A361]">{detailLengkap.atas_nama}</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="font-semibold text-[#FFD700]">
+                      <p className="font-semibold text-[#8B7D3F]">
                         Status Pembayaran
                       </p>
-                      <p className="text-[#DAA520]">
+                      <p className="text-[#B8A361]">
                         {detailLengkap.status_pembayaran}
                       </p>
                     </div>
                     <div>
-                      <p className="font-semibold text-[#FFD700]">Status Pesanan</p>
-                      <p className="text-[#DAA520]">{detailLengkap.status_kue}</p>
+                      <p className="font-semibold text-[#8B7D3F]">Status Pesanan</p>
+                      <p className="text-[#B8A361]">{detailLengkap.status_kue}</p>
                     </div>
                   </div>
 
                   <div className="mb-4">
-                    <h3 className="font-semibold text-[#FFD700] mb-2">
+                    <h3 className="font-semibold text-[#8B7D3F] mb-2">
                       Detail Produk
                     </h3>
                     {detailLengkap.items.map((item, index) => (
@@ -930,16 +928,16 @@ const BukuPesananNurCake = () => {
                           <div className="flex justify-between mb-1">
                             <span>{item.jenis_kue || item.nama_produk}</span>
                             <div className="flex items-center">
-                        <span className="text-gray-500 mr-2">
-                          ({item.jumlah || item.jumlah_pesanan}x)
-                        </span>
+                      <span className="text-[#B8A361] mr-2">
+                        ({item.jumlah || item.jumlah_pesanan}x)
+                      </span>
                               <span>
-                          Rp{" "}
+                        Rp{" "}
                                 {Number(
                                     item.harga_jual *
                                     (item.jumlah || item.jumlah_pesanan)
                                 ).toLocaleString()}
-                        </span>
+                      </span>
                             </div>
                           </div>
                           {renderBiayaTambahan(item)}
@@ -948,33 +946,33 @@ const BukuPesananNurCake = () => {
                     {renderAdditionalItems(detailLengkap.additional_items)}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="font-semibold text-[#FFD700]">Total Harga</p>
-                      <p>Rp {Number(detailLengkap.total_harga).toLocaleString()}</p>
+                      <p className="font-semibold text-[#8B7D3F]">Total Harga</p>
+                      <p className="text-[#B8A361]">Rp {Number(detailLengkap.total_harga).toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-[#FFD700]">Jumlah Dibayar</p>
-                      <p>
+                      <p className="font-semibold text-[#8B7D3F]">Jumlah Dibayar</p>
+                      <p className="text-[#B8A361]">
                         Rp {Number(detailLengkap.jumlah_dibayar).toLocaleString()}
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="font-semibold text-[#FFD700]">
+                      <p className="font-semibold text-[#8B7D3F]">
                         Tanggal Pengambilan
                       </p>
-                      <p className="text-[#DAA520]">
+                      <p className="text-[#B8A361]">
                         {formatDate(detailLengkap.tanggal_pengambilan)}
                       </p>
                     </div>
                     <div>
-                      <p className="font-semibold text-[#FFD700]">
+                      <p className="font-semibold text-[#8B7D3F]">
                         Waktu Pengambilan
                       </p>
-                      <p className="text-[#DAA520]">
+                      <p className="text-[#B8A361]">
                         {detailLengkap.waktu_pengambilan}
                       </p>
                     </div>
@@ -982,8 +980,8 @@ const BukuPesananNurCake = () => {
 
                   {detailLengkap.catatan && (
                       <div className="mb-4">
-                        <p className="font-semibold text-[#FFD700]">Catatan</p>
-                        <p className="text-[#DAA520]">{detailLengkap.catatan}</p>
+                        <p className="font-semibold text-[#8B7D3F]">Catatan</p>
+                        <p className="text-[#B8A361]">{detailLengkap.catatan}</p>
                       </div>
                   )}
                 </div>
@@ -991,7 +989,7 @@ const BukuPesananNurCake = () => {
                 <div className="p-6 pt-0">
                   <button
                       onClick={() => setDetailLengkap(null)}
-                      className="bg-[#FFD700] text-[#1a1a1a] px-4 py-2 rounded w-full hover:bg-[#DAA520]">
+                      className="bg-[#D4AF37] text-[#FAF3E0] px-4 py-2 rounded w-full hover:bg-[#C5B358]">
                     Tutup
                   </button>
                 </div>
@@ -1001,55 +999,55 @@ const BukuPesananNurCake = () => {
 
         {selectedPesanan && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-                <h2 className="text-2xl font-bold mb-4">Detail Pesanan</h2>
+              <div className="bg-[#FFF8E7] rounded-lg max-w-2xl w-full p-6">
+                <h2 className="text-2xl font-bold mb-4 text-[#8B7D3F]">Detail Pesanan</h2>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="font-semibold">Nama Pemesan</p>
-                    <p>{selectedPesanan.atas_nama}</p>
+                    <p className="font-semibold text-[#8B7D3F]">Nama Pemesan</p>
+                    <p className="text-[#B8A361]">{selectedPesanan.atas_nama}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Status Pembayaran</p>
-                    <p>{selectedPesanan.status_pembayaran}</p>
+                    <p className="font-semibold text-[#8B7D3F]">Status Pembayaran</p>
+                    <p className="text-[#B8A361]">{selectedPesanan.status_pembayaran}</p>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Detail Produk</h3>
+                  <h3 className="font-semibold text-[#8B7D3F] mb-2">Detail Produk</h3>
                   {selectedPesanan.items.map((item, index) => (
                       <div key={index} className="flex justify-between mb-1">
-                  <span>
-                    {item.jenis_kue} ({item.jumlah}x)
-                  </span>
-                        <span>
-                    Rp {Number(item.harga_jual * item.jumlah).toLocaleString()}
-                  </span>
+                <span className="text-[#8B7D3F]">
+                  {item.jenis_kue} ({item.jumlah}x)
+                </span>
+                        <span className="text-[#B8A361]">
+                  Rp {Number(item.harga_jual * item.jumlah).toLocaleString()}
+                </span>
                       </div>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="font-semibold">Total Harga</p>
-                    <p>Rp {Number(selectedPesanan.total_harga).toLocaleString()}</p>
+                    <p className="font-semibold text-[#8B7D3F]">Total Harga</p>
+                    <p className="text-[#B8A361]">Rp {Number(selectedPesanan.total_harga).toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Jumlah Dibayar</p>
-                    <p>
+                    <p className="font-semibold text-[#8B7D3F]">Jumlah Dibayar</p>
+                    <p className="text-[#B8A361]">
                       Rp {Number(selectedPesanan.jumlah_dibayar).toLocaleString()}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="font-semibold">Tanggal Transaksi</p>
-                    <p>{formatDate(selectedPesanan.tanggal_transaksi)}</p>
+                    <p className="font-semibold text-[#8B7D3F]">Tanggal Transaksi</p>
+                    <p className="text-[#B8A361]">{formatDate(selectedPesanan.tanggal_transaksi)}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Tanggal & Waktu Pengambilan</p>
-                    <p>
+                    <p className="font-semibold text-[#8B7D3F]">Tanggal & Waktu Pengambilan</p>
+                    <p className="text-[#B8A361]">
                       {formatDate(selectedPesanan.tanggal_pengambilan)}{" "}
                       {selectedPesanan.waktu_pengambilan}
                     </p>
@@ -1058,14 +1056,14 @@ const BukuPesananNurCake = () => {
 
                 {selectedPesanan.catatan && (
                     <div className="mb-4">
-                      <p className="font-semibold">Catatan</p>
-                      <p>{selectedPesanan.catatan}</p>
+                      <p className="font-semibold text-[#8B7D3F]">Catatan</p>
+                      <p className="text-[#B8A361]">{selectedPesanan.catatan}</p>
                     </div>
                 )}
 
                 <button
                     onClick={() => setSelectedPesanan(null)}
-                    className="bg-teal-600 text-white px-4 py-2 rounded">
+                    className="bg-[#D4AF37] text-[#FAF3E0] px-4 py-2 rounded hover:bg-[#C5B358]">
                   Tutup
                 </button>
               </div>

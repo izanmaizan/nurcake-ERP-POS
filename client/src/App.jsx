@@ -60,10 +60,12 @@ const App = () => {
             <Route path="/keuangan-ng" element={<KeuanganNurGroup />} />
           </Routes>
         </main>
-        <footer className="bg-[#1E1E1E] h-14 w-full flex items-center justify-center border-t border-[#D4AF37]/20">
-          <p className="text-[#D4AF37]/80 text-sm tracking-wide">
-            © 2024 NUR GROUP ERP By Maizan Insani Akbar. All rights reserved.
-          </p>
+        <footer className="bg-[#FAF3E0] h-auto py-2 w-full flex items-center justify-center border-t border-[#D4AF37]/40">
+          <div className="text-center text-[#8B7D3F] text-sm tracking-wide space-y-0.5">
+            <p>© 2024 NUR GROUP ERP</p>
+            <p>by Maizan Insani Akbar.</p>
+            <p>All rights reserved.</p>
+          </div>
         </footer>
       </div>
     </Router>

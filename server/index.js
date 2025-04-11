@@ -38,6 +38,8 @@ const corsOptions = {
       "http://www.checkpoint-sig.site",
       "https://www.checkpoint-sig.site",
       "http://localhost:5173",
+      "http://172.20.10.11:5173",
+      "http://192.168.18.25:5173",
     ];
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
@@ -67,8 +69,16 @@ app.use(router);
 
 start();
 
-app.listen(port, () => {
-  console.log(`Server berjalan di port ${port}`);
+// app.listen(port, () => {
+//   console.log(`Server berjalan di port ${port}`);
+// });
+
+// memakai port komputer
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server berjalan di http://localhost:${port} dan bisa diakses dari jaringan`);
 });
+
+
+
 
 export default app;

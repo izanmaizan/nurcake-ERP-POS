@@ -41,18 +41,19 @@ const Beranda = () => {
     salesByCategory: [],
   });
 
-  // Warna tema
-  const COLORS = ["#FFD700", "#DAA520", "#FFC000"]; // Variasi warna emas
-  const bgColor = "#1a1a1a"; // Hitam pekat
-  const textColor = "#FFD700"; // Emas
-  const secondaryTextColor = "#DAA520"; // Emas gelap
-  const cardBgColor = "#2d2d2d"; // Hitam sekunder
+  // Warna tema krem/emas
+  const COLORS = ["#D4AF37", "#C5B358", "#E6BE8A"]; // Variasi warna krem/emas
+  const bgColor = "#FAF3E0"; // Krem muda/background utama
+  const textColor = "#8B7D3F"; // Emas gelap untuk teks
+  const secondaryTextColor = "#B8A361"; // Emas sedang untuk teks sekunder
+  const cardBgColor = "#FFF8E7"; // Krem sangat muda untuk kartu
+  const API = import.meta.env.VITE_API;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch user data
-        const response = await axios.get("http://localhost:3000/me", {
+        const response = await axios.get(`${API}/me`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("refresh_token")}`,
           },
@@ -71,13 +72,13 @@ const Beranda = () => {
           case "admin":
             // Fetch semua data untuk admin
             const [usersRes, ncRes, nbaRes, nmuaRes, ncTransaksiRes] =
-              await Promise.all([
-                axios.get("http://localhost:3000/users"),
-                axios.get("http://localhost:3000/transaksi-nc"),
-                axios.get("http://localhost:3000/transaksi-nba"),
-                axios.get("http://localhost:3000/booking"),
-                axios.get("http://localhost:3000/transaksi-nc"), // Tambahan fetch untuk modal NC
-              ]);
+                await Promise.all([
+                  axios.get(`${API}/users`),
+                  axios.get(`${API}/transaksi-nc`),
+                  axios.get(`${API}/transaksi-nba`),
+                  axios.get(`${API}/booking`),
+                  axios.get(`${API}/transaksi-nc`),
+                ]);
 
             transactions = {
               nc: ncRes.data,
@@ -100,16 +101,16 @@ const Beranda = () => {
                 t.items.forEach((item) => {
                   if (item.tipe === "custom_cake") {
                     modalNC +=
-                      Number(item.modal || 0) *
-                      Number(item.jumlah_pesanan || 1);
+                        Number(item.modal || 0) *
+                        Number(item.jumlah_pesanan || 1);
                   } else if (item.tipe === "kue_ready") {
                     modalNC +=
-                      Number(item.modal_pembuatan || 0) *
-                      Number(item.jumlah || 1);
+                        Number(item.modal_pembuatan || 0) *
+                        Number(item.jumlah || 1);
                   } else if (item.tipe === "produk_reguler") {
                     modalNC += item.total_modal
-                      ? Number(item.total_modal)
-                      : Number(item.modal || 0) * Number(item.jumlah || 1);
+                        ? Number(item.total_modal)
+                        : Number(item.modal || 0) * Number(item.jumlah || 1);
                   }
                 });
               }
@@ -123,25 +124,23 @@ const Beranda = () => {
 
             // Gabungkan modal NC dengan modal lainnya
             totalModal =
-              modalNC +
-              nbaRes.data.reduce(
-                (acc, curr) => acc + Number(curr.modal_pembuatan || 0),
-                0
-              ) +
-              nmuaRes.data.reduce(
-                (acc, curr) => acc + Number(curr.kisaran_modal || 0),
-                0
-              );
+                modalNC +
+                nbaRes.data.reduce(
+                    (acc, curr) => acc + Number(curr.modal_pembuatan || 0),
+                    0
+                ) +
+                nmuaRes.data.reduce(
+                    (acc, curr) => acc + Number(curr.kisaran_modal || 0),
+                    0
+                );
             break;
 
           case "nurcake":
-            const ncResponse = await axios.get(
-              "http://localhost:3000/transaksi-nc"
-            );
+            const ncResponse = await axios.get(`${API}/transaksi-nc`);
             transactions = { nc: ncResponse.data };
             totalPenjualan = ncResponse.data.reduce(
-              (acc, curr) => acc + Number(curr.total_harga || 0),
-              0
+                (acc, curr) => acc + Number(curr.total_harga || 0),
+                0
             );
 
             // Hitung modal untuk NC dengan perhitungan detail
@@ -151,16 +150,16 @@ const Beranda = () => {
                 t.items.forEach((item) => {
                   if (item.tipe === "custom_cake") {
                     totalModal +=
-                      Number(item.modal || 0) *
-                      Number(item.jumlah_pesanan || 1);
+                        Number(item.modal || 0) *
+                        Number(item.jumlah_pesanan || 1);
                   } else if (item.tipe === "kue_ready") {
                     totalModal +=
-                      Number(item.modal_pembuatan || 0) *
-                      Number(item.jumlah || 1);
+                        Number(item.modal_pembuatan || 0) *
+                        Number(item.jumlah || 1);
                   } else if (item.tipe === "produk_reguler") {
                     totalModal += item.total_modal
-                      ? Number(item.total_modal)
-                      : Number(item.modal || 0) * Number(item.jumlah || 1);
+                        ? Number(item.total_modal)
+                        : Number(item.modal || 0) * Number(item.jumlah || 1);
                   }
                 });
               }
@@ -168,40 +167,36 @@ const Beranda = () => {
               if (t.additional_items && Array.isArray(t.additional_items)) {
                 t.additional_items.forEach((item) => {
                   totalModal +=
-                    Number(item.harga || 0) * Number(item.jumlah || 1);
+                      Number(item.harga || 0) * Number(item.jumlah || 1);
                 });
               }
             });
             break;
 
-          // Case lainnya tetap sama
+            // Case lainnya tetap sama
           case "nurbouquet":
-            const nbaResponse = await axios.get(
-              "http://localhost:3000/transaksi-nba"
-            );
+            const nbaResponse = await axios.get(`${API}/transaksi-nba`);
             transactions = { nba: nbaResponse.data };
             totalPenjualan = nbaResponse.data.reduce(
-              (acc, curr) => acc + Number(curr.total_harga || 0),
-              0
+                (acc, curr) => acc + Number(curr.total_harga || 0),
+                0
             );
             totalModal = nbaResponse.data.reduce(
-              (acc, curr) => acc + Number(curr.modal_pembuatan || 0),
-              0
+                (acc, curr) => acc + Number(curr.modal_pembuatan || 0),
+                0
             );
             break;
 
           case "nurmakeup":
-            const nmuaResponse = await axios.get(
-              "http://localhost:3000/booking"
-            );
+            const nmuaResponse = await axios.get(`${API}/booking`);
             transactions = { nmua: nmuaResponse.data };
             totalPenjualan = nmuaResponse.data.reduce(
-              (acc, curr) => acc + Number(curr.total_harga || 0),
-              0
+                (acc, curr) => acc + Number(curr.total_harga || 0),
+                0
             );
             totalModal = nmuaResponse.data.reduce(
-              (acc, curr) => acc + Number(curr.kisaran_modal || 0),
-              0
+                (acc, curr) => acc + Number(curr.kisaran_modal || 0),
+                0
             );
             break;
         }
@@ -214,8 +209,8 @@ const Beranda = () => {
           totalModal,
           totalPenghasilan: totalPenjualan - totalModal,
           salesByCategory: prepareSalesCategories(
-            transactions,
-            response.data.role
+              transactions,
+              response.data.role
           ),
         });
 
@@ -244,26 +239,26 @@ const Beranda = () => {
         {
           name: "Nur Cake",
           value:
-            transactions.nc?.reduce(
-              (acc, curr) => acc + Number(curr.total_harga || 0),
-              0
-            ) || 0,
+              transactions.nc?.reduce(
+                  (acc, curr) => acc + Number(curr.total_harga || 0),
+                  0
+              ) || 0,
         },
         {
           name: "Nur Bouquet",
           value:
-            transactions.nba?.reduce(
-              (acc, curr) => acc + Number(curr.total_harga || 0),
-              0
-            ) || 0,
+              transactions.nba?.reduce(
+                  (acc, curr) => acc + Number(curr.total_harga || 0),
+                  0
+              ) || 0,
         },
         {
           name: "Nur Make Up",
           value:
-            transactions.nmua?.reduce(
-              (acc, curr) => acc + Number(curr.total_harga || 0),
-              0
-            ) || 0,
+              transactions.nmua?.reduce(
+                  (acc, curr) => acc + Number(curr.total_harga || 0),
+                  0
+              ) || 0,
         },
       ];
     } else {
@@ -278,8 +273,8 @@ const Beranda = () => {
         {
           name: categoryName,
           value: data.reduce(
-            (acc, curr) => acc + Number(curr.total_harga || 0),
-            0
+              (acc, curr) => acc + Number(curr.total_harga || 0),
+              0
           ),
         },
       ];
@@ -309,41 +304,41 @@ const Beranda = () => {
 
       if (role === "admin" || role === "nurcake") {
         monthData["Nur Cake"] = (salesData.nc || [])
-          .filter((sale) => {
-            const saleDate = new Date(sale.tanggal_transaksi);
-            return (
-              saleDate &&
-              !isNaN(saleDate) &&
-              saleDate.toLocaleString("id-ID", { month: "short" }) === month
-            );
-          })
-          .reduce((acc, curr) => acc + (Number(curr.total_harga) || 0), 0);
+            .filter((sale) => {
+              const saleDate = new Date(sale.tanggal_transaksi);
+              return (
+                  saleDate &&
+                  !isNaN(saleDate) &&
+                  saleDate.toLocaleString("id-ID", { month: "short" }) === month
+              );
+            })
+            .reduce((acc, curr) => acc + (Number(curr.total_harga) || 0), 0);
       }
 
       if (role === "admin" || role === "nurbouquet") {
         monthData["Nur Bouquet"] = (salesData.nba || [])
-          .filter((sale) => {
-            const saleDate = new Date(sale.tanggal_transaksi);
-            return (
-              saleDate &&
-              !isNaN(saleDate) &&
-              saleDate.toLocaleString("id-ID", { month: "short" }) === month
-            );
-          })
-          .reduce((acc, curr) => acc + (Number(curr.total_harga) || 0), 0);
+            .filter((sale) => {
+              const saleDate = new Date(sale.tanggal_transaksi);
+              return (
+                  saleDate &&
+                  !isNaN(saleDate) &&
+                  saleDate.toLocaleString("id-ID", { month: "short" }) === month
+              );
+            })
+            .reduce((acc, curr) => acc + (Number(curr.total_harga) || 0), 0);
       }
 
       if (role === "admin" || role === "nurmakeup") {
         monthData["Nur Make Up"] = (salesData.nmua || [])
-          .filter((booking) => {
-            const bookingDate = new Date(booking.tanggal_booking);
-            return (
-              bookingDate &&
-              !isNaN(bookingDate) &&
-              bookingDate.toLocaleString("id-ID", { month: "short" }) === month
-            );
-          })
-          .reduce((acc, curr) => acc + (Number(curr.total_harga) || 0), 0);
+            .filter((booking) => {
+              const bookingDate = new Date(booking.tanggal_booking);
+              return (
+                  bookingDate &&
+                  !isNaN(bookingDate) &&
+                  bookingDate.toLocaleString("id-ID", { month: "short" }) === month
+              );
+            })
+            .reduce((acc, curr) => acc + (Number(curr.total_harga) || 0), 0);
       }
 
       return monthData;
@@ -351,392 +346,392 @@ const Beranda = () => {
   };
 
   const renderCustomizedLabel = ({
-    cx,
-    cy,
-    midAngle,
-    innerRadius,
-    outerRadius,
-    percent,
-  }) => {
+                                   cx,
+                                   cy,
+                                   midAngle,
+                                   innerRadius,
+                                   outerRadius,
+                                   percent,
+                                 }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos((-midAngle * Math.PI) / 180);
     const y = cy + radius * Math.sin((-midAngle * Math.PI) / 180);
 
     return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor={x > cx ? "start" : "end"}
-        dominantBaseline="central">
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
+        <text
+            x={x}
+            y={y}
+            fill="#8B7D3F"
+            textAnchor={x > cx ? "start" : "end"}
+            dominantBaseline="central">
+          {`${(percent * 100).toFixed(0)}%`}
+        </text>
     );
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#1a1a1a]">
-        <div className="text-center">
-          <div className="loader border-t-4 border-[#FFD700] rounded-full w-12 h-12 animate-spin mx-auto mb-4"></div>
-          <p className="text-[#DAA520]">Loading...</p>
+        <div className="flex items-center justify-center min-h-screen bg-[#FAF3E0]">
+          <div className="text-center">
+            <div className="loader border-t-4 border-[#D4AF37] rounded-full w-12 h-12 animate-spin mx-auto mb-4"></div>
+            <p className="text-[#8B7D3F]">Loading...</p>
+          </div>
         </div>
-      </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#1a1a1a]">
-        <div className="text-center">
-          <p className="text-[#FFD700] mb-4">{error}</p>
-          <Link
-            to="/login"
-            className="text-[#1a1a1a] bg-[#FFD700] hover:bg-[#DAA520] focus:ring-4 focus:outline-none focus:ring-[#FFC000] font-medium rounded-lg text-sm px-5 py-2 transition-all">
-            Kembali ke Login
-          </Link>
+        <div className="flex items-center justify-center min-h-screen bg-[#FAF3E0]">
+          <div className="text-center">
+            <p className="text-[#8B7D3F] mb-4">{error}</p>
+            <Link
+                to="/login"
+                className="text-[#FAF3E0] bg-[#D4AF37] hover:bg-[#C5B358] focus:ring-4 focus:outline-none focus:ring-[#E6BE8A] font-medium rounded-lg text-sm px-5 py-2 transition-all">
+              Kembali ke Login
+            </Link>
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
-    // Beranda
-    <main className="bg-[#1a1a1a] py-16 px-5 h-full w-full md:py-20 md:px-20">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#FFD700]">Dashboard</h1>
-          <p className="text-[#DAA520]">
-            Selamat datang kembali di NUR GROUP ERP {role}, {name || username}!
-          </p>
-        </div>
-
-        {/* Statistik Cards */}
-        <div
-          className={`grid gap-6 mb-8 ${
-            role === "admin"
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
-              : "grid-cols-1 md:grid-cols-3"
-          }`}>
-          {role === "admin" && (
-            <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-              <CardContent className="flex items-center p-6">
-                <div className="p-2 bg-[#3d3d3d] rounded-lg">
-                  <Users className="h-6 w-6 text-[#FFD700]" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-[#DAA520]">
-                    Total Akun
-                  </p>
-                  <h3 className="text-2xl font-bold text-[#FFD700]">
-                    {summaryData.totalAkun}
-                  </h3>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {role !== "nurmakeup" ? (
-            <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-              <CardContent className="flex items-center p-6">
-                <div className="p-2 bg-[#3d3d3d] rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-[#FFD700]" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-[#DAA520]">
-                    Total Penjualan
-                  </p>
-                  <h3 className="text-2xl font-bold text-[#FFD700]">
-                    {formatCurrency(summaryData.totalPenjualan)}
-                  </h3>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-              <CardContent className="flex items-center p-6">
-                <div className="p-2 bg-[#3d3d3d] rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-[#FFD700]" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-[#DAA520]">
-                    Total Booking
-                  </p>
-                  <h3 className="text-2xl font-bold text-[#FFD700]">
-                    {formatCurrency(summaryData.totalPenjualan)}
-                  </h3>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {(role === "admin" ||
-            role === "nurcake" ||
-            role === "nurbouquet" ||
-            role === "nurmakeup") && (
-            <>
-              <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-                <CardContent className="flex items-center p-6">
-                  <div className="p-2 bg-[#3d3d3d] rounded-lg">
-                    <Wallet className="h-6 w-6 text-[#FFD700]" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-[#DAA520]">
-                      Total Modal
-                    </p>
-                    <h3 className="text-2xl font-bold text-[#FFD700]">
-                      {formatCurrency(summaryData.totalModal)}
-                    </h3>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-                <CardContent className="flex items-center p-6">
-                  <div className="p-2 bg-[#3d3d3d] rounded-lg">
-                    <DollarSign className="h-6 w-6 text-[#FFD700]" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-[#DAA520]">
-                      Total Penghasilan
-                    </p>
-                    <h3 className="text-2xl font-bold text-[#FFD700]">
-                      {formatCurrency(summaryData.totalPenghasilan)}
-                    </h3>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
-
-        {/* Grafik */}
-        {role === "admin" ? (
-          // Layout untuk Admin (3 grafik)
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Bar Chart */}
-            <Card className="lg:col-span-2 bg-[#2d2d2d] border-[#FFD700] border">
-              <CardHeader>
-                <CardTitle className="text-[#FFD700]">
-                  Penjualan per Kategori (Bar Chart)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={prepareSalesData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="bulan" stroke="#DAA520" />
-                      <YAxis
-                        tickFormatter={(value) => `Rp${value / 1000000}M`}
-                        stroke="#DAA520"
-                      />
-                      <Tooltip
-                        formatter={(value) => formatCurrency(value)}
-                        contentStyle={{
-                          backgroundColor: "#2d2d2d",
-                          border: "1px solid #FFD700",
-                        }}
-                        labelStyle={{ color: "#FFD700" }}
-                      />
-                      <Legend wrapperStyle={{ color: "#DAA520" }} />
-                      <Bar dataKey="Nur Cake" fill="#FFD700" />
-                      <Bar dataKey="Nur Bouquet" fill="#DAA520" />
-                      <Bar dataKey="Nur Make Up" fill="#FFC000" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pie Chart (hanya untuk admin) */}
-            <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-              <CardHeader>
-                <CardTitle className="text-[#FFD700]">
-                  Distribusi Penjualan (Pie Chart)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={summaryData.salesByCategory}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={renderCustomizedLabel}
-                        outerRadius={150}
-                        fill="#8884d8"
-                        dataKey="value">
-                        {summaryData.salesByCategory.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value) => formatCurrency(value)}
-                        contentStyle={{
-                          backgroundColor: "#2d2d2d",
-                          border: "1px solid #FFD700",
-                        }}
-                        labelStyle={{ color: "#FFD700" }}
-                      />
-                      <Legend wrapperStyle={{ color: "#DAA520" }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Line Chart */}
-            <Card className="lg:col-span-3 bg-[#2d2d2d] border-[#FFD700] border">
-              <CardHeader>
-                <CardTitle className="text-[#FFD700]">
-                  Trend Penjualan (Line Chart)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={prepareSalesData()}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                      <XAxis dataKey="bulan" stroke="#DAA520" />
-                      <YAxis
-                        tickFormatter={(value) => `Rp${value / 1000000}M`}
-                        stroke="#DAA520"
-                      />
-                      <Tooltip
-                        formatter={(value) => formatCurrency(value)}
-                        contentStyle={{
-                          backgroundColor: "#2d2d2d",
-                          border: "1px solid #FFD700",
-                        }}
-                        labelStyle={{ color: "#FFD700" }}
-                      />
-                      <Legend wrapperStyle={{ color: "#DAA520" }} />
-                      <Line
-                        type="monotone"
-                        dataKey="Nur Cake"
-                        stroke="#FFD700"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="Nur Bouquet"
-                        stroke="#DAA520"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="Nur Make Up"
-                        stroke="#FFC000"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+      // Beranda dengan tema krem/emas
+      <main className="bg-[#FAF3E0] py-8 px-4 h-full w-full md:py-12 md:px-8 lg:py-16 lg:px-12 mt-10 md:mt-0">
+        <div className="max-w-7xl mx-auto mt-4">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#8B7D3F]">Dashboard</h1>
+            <p className="text-[#B8A361] text-sm md:text-base">
+              Selamat datang kembali di NUR GROUP ERP {role}, {name || username}!
+            </p>
           </div>
-        ) : (
-          // Layout untuk role selain Admin (2 grafik)
-          <div className="grid grid-cols-1 gap-6">
-            {/* Bar Chart (ukuran penuh) */}
-            <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-              <CardHeader>
-                <CardTitle className="text-[#FFD700]">
-                  Penjualan per Kategori (Bar Chart)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={prepareSalesData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="bulan" stroke="#DAA520" />
-                      <YAxis
-                        tickFormatter={(value) => `Rp${value / 1000000}M`}
-                        stroke="#DAA520"
-                      />
-                      <Tooltip
-                        formatter={(value) => formatCurrency(value)}
-                        contentStyle={{
-                          backgroundColor: "#2d2d2d",
-                          border: "1px solid #FFD700",
-                        }}
-                        labelStyle={{ color: "#FFD700" }}
-                      />
-                      <Legend wrapperStyle={{ color: "#DAA520" }} />
-                      {role === "nurcake" && (
-                        <Bar dataKey="Nur Cake" fill="#FFD700" />
-                      )}
-                      {role === "nurbouquet" && (
-                        <Bar dataKey="Nur Bouquet" fill="#DAA520" />
-                      )}
-                      {role === "nurmakeup" && (
-                        <Bar dataKey="Nur Make Up" fill="#FFC000" />
-                      )}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Line Chart (ukuran penuh) */}
-            <Card className="bg-[#2d2d2d] border-[#FFD700] border">
-              <CardHeader>
-                <CardTitle className="text-[#FFD700]">
-                  Trend Penjualan (Line Chart)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={prepareSalesData()}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                      <XAxis dataKey="bulan" stroke="#DAA520" />
-                      <YAxis
-                        tickFormatter={(value) => `Rp${value / 1000000}M`}
-                        stroke="#DAA520"
-                      />
-                      <Tooltip
-                        formatter={(value) => formatCurrency(value)}
-                        contentStyle={{
-                          backgroundColor: "#2d2d2d",
-                          border: "1px solid #FFD700",
-                        }}
-                        labelStyle={{ color: "#FFD700" }}
-                      />
-                      <Legend wrapperStyle={{ color: "#DAA520" }} />
-                      {role === "nurcake" && (
-                        <Line
-                          type="monotone"
-                          dataKey="Nur Cake"
-                          stroke="#FFD700"
-                          strokeWidth={2}
-                        />
-                      )}
-                      {role === "nurbouquet" && (
-                        <Line
-                          type="monotone"
-                          dataKey="Nur Bouquet"
-                          stroke="#DAA520"
-                          strokeWidth={2}
-                        />
-                      )}
-                      {role === "nurmakeup" && (
-                        <Line
-                          type="monotone"
-                          dataKey="Nur Make Up"
-                          stroke="#FFC000"
-                          strokeWidth={2}
-                        />
-                      )}
-                    </LineChart>
-                  </ResponsiveContainer>
+          {/* Statistik Cards - Responsif */}
+          <div
+              className={`grid gap-4 md:gap-6 mb-6 md:mb-8 ${
+                  role === "admin"
+                      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                      : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+              }`}>
+            {role === "admin" && (
+                <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardContent className="flex items-center p-4 md:p-6">
+                    <div className="p-2 bg-[#F5EDD6] rounded-lg">
+                      <Users className="h-5 w-5 md:h-6 md:w-6 text-[#D4AF37]" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-xs md:text-sm font-medium text-[#B8A361]">
+                        Total Akun
+                      </p>
+                      <h3 className="text-lg md:text-2xl font-bold text-[#8B7D3F]">
+                        {summaryData.totalAkun}
+                      </h3>
+                    </div>
+                  </CardContent>
+                </Card>
+            )}
+
+            {role !== "nurmakeup" ? (
+                <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardContent className="flex items-center p-4 md:p-6">
+                    <div className="p-2 bg-[#F5EDD6] rounded-lg">
+                      <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-[#D4AF37]" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-xs md:text-sm font-medium text-[#B8A361]">
+                        Total Penjualan
+                      </p>
+                      <h3 className="text-lg md:text-2xl font-bold text-[#8B7D3F]">
+                        {formatCurrency(summaryData.totalPenjualan)}
+                      </h3>
+                    </div>
+                  </CardContent>
+                </Card>
+            ) : (
+                <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardContent className="flex items-center p-4 md:p-6">
+                    <div className="p-2 bg-[#F5EDD6] rounded-lg">
+                      <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-[#D4AF37]" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-xs md:text-sm font-medium text-[#B8A361]">
+                        Total Booking
+                      </p>
+                      <h3 className="text-lg md:text-2xl font-bold text-[#8B7D3F]">
+                        {formatCurrency(summaryData.totalPenjualan)}
+                      </h3>
+                    </div>
+                  </CardContent>
+                </Card>
+            )}
+
+            {(role === "admin" ||
+                role === "nurcake" ||
+                role === "nurbouquet" ||
+                role === "nurmakeup") && (
+                <>
+                  <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                    <CardContent className="flex items-center p-4 md:p-6">
+                      <div className="p-2 bg-[#F5EDD6] rounded-lg">
+                        <Wallet className="h-5 w-5 md:h-6 md:w-6 text-[#D4AF37]" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-xs md:text-sm font-medium text-[#B8A361]">
+                          Total Modal
+                        </p>
+                        <h3 className="text-lg md:text-2xl font-bold text-[#8B7D3F]">
+                          {formatCurrency(summaryData.totalModal)}
+                        </h3>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                    <CardContent className="flex items-center p-4 md:p-6">
+                      <div className="p-2 bg-[#F5EDD6] rounded-lg">
+                        <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-[#D4AF37]" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-xs md:text-sm font-medium text-[#B8A361]">
+                          Total Penghasilan
+                        </p>
+                        <h3 className="text-lg md:text-2xl font-bold text-[#8B7D3F]">
+                          {formatCurrency(summaryData.totalPenghasilan)}
+                        </h3>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+            )}
+          </div>
+
+          {/* Grafik */}
+          {role === "admin" ? (
+              // Layout untuk Admin (3 grafik) - Responsif
+              <div className="grid grid-cols-1 gap-4 md:gap-6">
+                {/* Bar Chart */}
+                <Card className="lg:col-span-2 bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="text-[#8B7D3F] text-lg md:text-xl">
+                      Penjualan per Kategori
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="h-[300px] md:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={prepareSalesData()}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E6BE8A" />
+                          <XAxis dataKey="bulan" stroke="#B8A361" />
+                          <YAxis
+                              tickFormatter={(value) => `Rp${value / 1000000}M`}
+                              stroke="#B8A361"
+                          />
+                          <Tooltip
+                              formatter={(value) => formatCurrency(value)}
+                              contentStyle={{
+                                backgroundColor: "#FFF8E7",
+                                border: "1px solid #D4AF37",
+                              }}
+                              labelStyle={{ color: "#8B7D3F" }}
+                          />
+                          <Legend wrapperStyle={{ color: "#B8A361" }} />
+                          <Bar dataKey="Nur Cake" fill="#D4AF37" />
+                          <Bar dataKey="Nur Bouquet" fill="#C5B358" />
+                          <Bar dataKey="Nur Make Up" fill="#E6BE8A" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Pie Chart (hanya untuk admin) */}
+                <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="text-[#8B7D3F] text-lg md:text-xl">
+                      Distribusi Penjualan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="h-[300px] md:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                              data={summaryData.salesByCategory}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={renderCustomizedLabel}
+                              outerRadius={120}
+                              fill="#8884d8"
+                              dataKey="value">
+                            {summaryData.salesByCategory.map((entry, index) => (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={COLORS[index % COLORS.length]}
+                                />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                              formatter={(value) => formatCurrency(value)}
+                              contentStyle={{
+                                backgroundColor: "#FFF8E7",
+                                border: "1px solid #D4AF37",
+                              }}
+                              labelStyle={{ color: "#8B7D3F" }}
+                          />
+                          <Legend wrapperStyle={{ color: "#B8A361" }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Line Chart */}
+                <Card className="lg:col-span-3 bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="text-[#8B7D3F] text-lg md:text-xl">
+                      Trend Penjualan (Line Chart)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="h-[300px] md:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={prepareSalesData()}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E6BE8A" />
+                          <XAxis dataKey="bulan" stroke="#B8A361" />
+                          <YAxis
+                              tickFormatter={(value) => `Rp${value / 1000000}M`}
+                              stroke="#B8A361"
+                          />
+                          <Tooltip
+                              formatter={(value) => formatCurrency(value)}
+                              contentStyle={{
+                                backgroundColor: "#FFF8E7",
+                                border: "1px solid #D4AF37",
+                              }}
+                              labelStyle={{ color: "#8B7D3F" }}
+                          />
+                          <Legend wrapperStyle={{ color: "#B8A361" }} />
+                          <Line
+                              type="monotone"
+                              dataKey="Nur Cake"
+                              stroke="#D4AF37"
+                              strokeWidth={2}
+                          />
+                          <Line
+                              type="monotone"
+                              dataKey="Nur Bouquet"
+                              stroke="#C5B358"
+                              strokeWidth={2}
+                          />
+                          <Line
+                              type="monotone"
+                              dataKey="Nur Make Up"
+                              stroke="#E6BE8A"
+                              strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+          ) : (
+              // Layout untuk role selain Admin (2 grafik) - Responsif
+              <div className="grid grid-cols-1 gap-4 md:gap-6">
+                {/* Bar Chart (ukuran penuh) */}
+                <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="text-[#8B7D3F] text-lg md:text-xl">
+                      Penjualan per Kategori
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="h-[300px] md:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={prepareSalesData()}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E6BE8A" />
+                          <XAxis dataKey="bulan" stroke="#B8A361" />
+                          <YAxis
+                              tickFormatter={(value) => `Rp${value / 1000000}M`}
+                              stroke="#B8A361"
+                          />
+                          <Tooltip
+                              formatter={(value) => formatCurrency(value)}
+                              contentStyle={{
+                                backgroundColor: "#FFF8E7",
+                                border: "1px solid #D4AF37",
+                              }}
+                              labelStyle={{ color: "#8B7D3F" }}
+                          />
+                          <Legend wrapperStyle={{ color: "#B8A361" }} />
+                          {role === "nurcake" && (
+                              <Bar dataKey="Nur Cake" fill="#D4AF37" />
+                          )}
+                          {role === "nurbouquet" && (
+                              <Bar dataKey="Nur Bouquet" fill="#C5B358" />
+                          )}
+                          {role === "nurmakeup" && (
+                              <Bar dataKey="Nur Make Up" fill="#E6BE8A" />
+                          )}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Line Chart (ukuran penuh) */}
+                <Card className="bg-[#FFF8E7] border-[#D4AF37] border shadow-md">
+                  <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="text-[#8B7D3F] text-lg md:text-xl">
+                      Trend Penjualan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="h-[300px] md:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={prepareSalesData()}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E6BE8A" />
+                          <XAxis dataKey="bulan" stroke="#B8A361" />
+                          <YAxis
+                              tickFormatter={(value) => `Rp${value / 1000000}M`}
+                              stroke="#B8A361"
+                          />
+                          <Tooltip
+                              formatter={(value) => formatCurrency(value)}
+                              contentStyle={{
+                                backgroundColor: "#FFF8E7",
+                                border: "1px solid #D4AF37",
+                              }}
+                              labelStyle={{ color: "#8B7D3F" }}
+                          />
+                          <Legend wrapperStyle={{ color: "#B8A361" }} />
+                          {role === "nurcake" && (
+                              <Line
+                                  type="monotone"
+                                  dataKey="Nur Cake"
+                                  stroke="#D4AF37"
+                                  strokeWidth={2}
+                              />
+                          )}
+                          {role === "nurbouquet" && (
+                              <Line
+                                  type="monotone"
+                                  dataKey="Nur Bouquet"
+                                  stroke="#C5B358"
+                                  strokeWidth={2}
+                              />
+                          )}
+                          {role === "nurmakeup" && (
+                              <Line
+                                  type="monotone"
+                                  dataKey="Nur Make Up"
+                                  stroke="#E6BE8A"
+                                  strokeWidth={2}
+                              />
+                          )}
+                        </LineChart>
+                      </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>

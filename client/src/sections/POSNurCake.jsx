@@ -1,65 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import DaftarProduk from "../components/DaftarProdukPOSNurCake.jsx";
 import TransaksiPOSNurCake from "../components/TransaksiPOSNurCake.jsx";
-// import { dummyProducts } from "../components/data/dummyData";
+
+// Konstanta tema warna krem/emas
+const COLORS = {
+  primary: "#D4AF37",     // Emas utama
+  secondary: "#C5B358",   // Emas sekunder
+  accent: "#E6BE8A",      // Aksen krem/emas
+  bgLight: "#FAF3E0",     // Krem muda untuk background
+  textDark: "#8B7D3F",    // Emas gelap untuk teks
+  textMedium: "#B8A361",  // Emas sedang untuk teks sekunder
+  cardBg: "#FFF8E7"       // Krem sangat muda untuk kartu
+};
+
+// Konstanta API
+const API = import.meta.env.VITE_API || "http://localhost:3000";
 
 const POSNurCake = () => {
+  const daftarProdukRef = useRef(null);
+  const transaksiRef = useRef(null);
   const [produkList, setProdukList] = useState([]);
   const [selectedProduk, setSelectedProduk] = useState([]);
   const [totalHarga, setTotalHarga] = useState(0);
   const [onKueReadyReturn, setOnKueReadyReturn] = useState(null);
   const [tanggalTransaksi, setTanggalTransaksi] = useState(
-    new Date().toISOString().slice(0, 10)
+      new Date().toISOString().slice(0, 10)
   );
   const [tanggalPengambilan, setTanggalPengambilan] = useState(
-    new Date().toISOString().slice(0, 10)
+      new Date().toISOString().slice(0, 10)
   );
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [refreshKueReady, setRefreshKueReady] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Tambahkan fungsi untuk menampilkan/menyembunyikan tombol scroll berdasarkan posisi scroll
+  // Deteksi ukuran layar untuk responsivitas
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Fungsi untuk menampilkan/menyembunyikan tombol scroll berdasarkan posisi scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 300) {
-        setShowScrollButton(true);
-      } else {
-        setShowScrollButton(false);
-      }
+      setShowScrollButton(window.scrollY > 300);
     };
 
     window.addEventListener("scroll", handleScroll);
-
-    // Cleanup event listener
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Fungsi untuk scroll ke atas dengan efek smooth yang lebih halus
+  // Fungsi untuk scroll ke atas dengan performa yang dioptimalkan
   const scrollToTop = () => {
-    // Metode dengan animasi yang lebih halus
-    const scrollStep = -window.scrollY / 15; // Semakin kecil pembagi, semakin cepat
-    const scrollInterval = setInterval(() => {
-      if (window.scrollY !== 0) {
-        window.scrollBy(0, scrollStep);
-      } else {
-        clearInterval(scrollInterval);
-      }
-    }, 15); // Interval yang lebih rendah membuat animasi lebih smooth
-
-    // Alternatif menggunakan scrollTo dengan behavior smooth
-    // window.scrollTo({
-    //   top: 0,
-    //   behavior: "smooth"
-    // });
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
 
-  // Tambahkan fungsi untuk mengambil daftar produk
+  // Fungsi untuk mengambil daftar produk
   useEffect(() => {
     const fetchProdukList = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/produkNC");
+        const response = await axios.get(`${API}/produkNC`);
         setProdukList(response.data || []);
       } catch (error) {
         console.error("Gagal mengambil daftar produk:", error);
@@ -95,7 +102,7 @@ const POSNurCake = () => {
     // Handle kue ready
     if (produk.id_kue) {
       const existingKue = selectedProduk.find(
-        (item) => item.id_kue === produk.id_kue
+          (item) => item.id_kue === produk.id_kue
       );
       if (!existingKue) {
         setSelectedProduk([...selectedProduk, { ...produk }]);
@@ -105,15 +112,15 @@ const POSNurCake = () => {
 
     // Handle regular product
     const existingProduk = selectedProduk.find(
-      (item) => item.id_produk === produk.id_produk
+        (item) => item.id_produk === produk.id_produk
     );
     if (existingProduk) {
       setSelectedProduk(
-        selectedProduk.map((item) =>
-          item.id_produk === produk.id_produk
-            ? { ...item, jumlah: item.jumlah + 1 }
-            : item
-        )
+          selectedProduk.map((item) =>
+              item.id_produk === produk.id_produk
+                  ? { ...item, jumlah: item.jumlah + 1 }
+                  : item
+          )
       );
     } else {
       setSelectedProduk([...selectedProduk, { ...produk, jumlah: 1 }]);
@@ -143,9 +150,9 @@ const POSNurCake = () => {
 
   const handleJumlahChange = (produkId, jumlah) => {
     setSelectedProduk(
-      selectedProduk.map((item) =>
-        item.id_produk === produkId ? { ...item, jumlah: jumlah } : item
-      )
+        selectedProduk.map((item) =>
+            item.id_produk === produkId ? { ...item, jumlah: jumlah } : item
+        )
     );
   };
 
@@ -157,11 +164,11 @@ const POSNurCake = () => {
       for (const kue of kueReadyItems) {
         try {
           // Hapus kue ready dari database
-          await axios.delete(`http://localhost:3000/kue-ready/${kue.id_kue}`);
+          await axios.delete(`${API}/kue-ready/${kue.id_kue}`);
         } catch (error) {
           console.error(
-            `Gagal menghapus kue ready dengan ID ${kue.id_kue}:`,
-            error
+              `Gagal menghapus kue ready dengan ID ${kue.id_kue}:`,
+              error
           );
         }
       }
@@ -173,15 +180,18 @@ const POSNurCake = () => {
       setTanggalTransaksi(currentDate);
       setTanggalPengambilan(currentDate);
 
-      // Tambahkan: Trigger refresh daftar kue ready
+      // Trigger refresh daftar kue ready
       triggerKueReadyRefresh();
+
+      // Notifikasi sukses
+      // alert("Transaksi berhasil dilakukan!");
     } catch (error) {
       console.error("Error dalam transaksi:", error);
       alert("Gagal melakukan transaksi");
     }
   };
 
-  // Tambahkan fungsi ini untuk menangani item yang telah dihapus
+  // Fungsi untuk menangani item yang telah dihapus
   const handleItemRemoved = (id, type) => {
     // Item sudah dihapus dari database, sekarang hapus dari state
     if (type === "kue_ready") {
@@ -201,60 +211,106 @@ const POSNurCake = () => {
   }, [selectedProduk]);
 
   return (
-    <section className="bg-[#1a1a1a] py-16 px-5 h-full w-full md:py-24 md:px-20 flex space-x-8">
-      <div className="flex-1">
-        <h1 className="text-[40px] font-semibold mb-5 text-[#FFD700] font-Roboto">
+      <section
+          className="py-6 px-4 min-h-screen w-full sm:py-8 md:py-12 lg:py-16 md:px-8 lg:px-12 mt-4"
+          style={{ backgroundColor: COLORS.bgLight }}
+      >
+        <h1
+            className="text-2xl sm:text-3xl md:text-4xl font-semibold mt-12 md:mt-4 mb-3 md:mb-5 font-Roboto text-center md:text-left"
+            style={{ color: COLORS.primary }}
+        >
           Point of Sales Nur Cake
         </h1>
 
-        <DaftarProduk
-          produkList={produkList}
-          handleAddProduk={handleAddProduk}
-          selectedProduk={selectedProduk}
-          onItemRemoved={handleItemRemoved}
-          refreshTrigger={refreshKueReady}
-        />
-      </div>
-
-      <div className="flex-1">
-        <TransaksiPOSNurCake
-          totalHarga={totalHarga}
-          setTotalHarga={setTotalHarga}
-          selectedProduk={selectedProduk}
-          handleJumlahProdukChange={handleJumlahChange}
-          handleRemoveProduk={handleRemoveProduk}
-          handleJualProduk={handleJualProduk}
-          tanggalTransaksi={tanggalTransaksi}
-          tanggalPengambilan={tanggalPengambilan}
-          handleTanggalTransaksiChange={setTanggalTransaksi}
-          handleTanggalPengambilanChange={setTanggalPengambilan}
-          triggerKueReadyRefresh={triggerKueReadyRefresh}
-        />
-      </div>
-
-      {/* Tombol Scroll ke Atas dengan Animasi */}
-      {showScrollButton && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 bg-[#FFD700] hover:bg-[#E6C200] text-[#1a1a1a] rounded-full p-3 shadow-lg transition-all duration-300 z-50 focus:outline-none animate-pulse hover:animate-none"
-          aria-label="Kembali ke atas"
-          title="Kembali ke atas">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 15l7-7 7 7"
+        {/* Layout Container - Column on Mobile, Row on Desktop */}
+        <div className="flex flex-col md:flex-row md:space-x-4 lg:space-x-8">
+          {/* DaftarProduk Container */}
+          <div ref={daftarProdukRef} className="w-full md:w-1/2 mb-6 md:mb-0">
+            <DaftarProduk
+                produkList={produkList}
+                handleAddProduk={handleAddProduk}
+                selectedProduk={selectedProduk}
+                onItemRemoved={handleItemRemoved}
+                refreshTrigger={refreshKueReady}
+                colors={COLORS}
             />
-          </svg>
-        </button>
-      )}
-    </section>
+          </div>
+
+          {/* TransaksiPOSNurCake Container */}
+          <div ref={transaksiRef} className="w-full md:w-1/2">
+            <TransaksiPOSNurCake
+                totalHarga={totalHarga}
+                setTotalHarga={setTotalHarga}
+                selectedProduk={selectedProduk}
+                handleJumlahProdukChange={handleJumlahChange}
+                handleRemoveProduk={handleRemoveProduk}
+                handleJualProduk={handleJualProduk}
+                tanggalTransaksi={tanggalTransaksi}
+                tanggalPengambilan={tanggalPengambilan}
+                handleTanggalTransaksiChange={setTanggalTransaksi}
+                handleTanggalPengambilanChange={setTanggalPengambilan}
+                triggerKueReadyRefresh={triggerKueReadyRefresh}
+                colors={COLORS}
+            />
+          </div>
+        </div>
+
+        {/* Tombol Scroll ke Atas dengan Animasi */}
+        {showScrollButton && (
+            <button
+                onClick={scrollToTop}
+                className="fixed bottom-20 right-4 p-3 sm:bottom-6 sm:right-8 sm:p-3 rounded-full shadow-lg transition-all duration-300 z-50 focus:outline-none hover:scale-110"
+                style={{
+                  backgroundColor: COLORS.primary,
+                  color: COLORS.bgLight
+                }}
+                aria-label="Kembali ke atas"
+                title="Kembali ke atas"
+            >
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 sm:h-6 sm:w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+              >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 15l7-7 7 7"
+                />
+              </svg>
+            </button>
+        )}
+
+        {isMobile && showScrollButton && (
+            <div className="fixed bottom-20 right-4 flex flex-col gap-3 z-50">
+              <button
+                  onClick={() => daftarProdukRef.current.scrollIntoView({ behavior: "smooth" })}
+                  className="p-3 rounded-full shadow-lg focus:outline-none hover:scale-110 transition-transform"
+                  style={{
+                    backgroundColor: COLORS.primary,
+                    color: COLORS.bgLight,
+                  }}
+                  aria-label="Ke atas - Daftar Produk"
+              >
+                📦
+              </button>
+              <button
+                  onClick={() => transaksiRef.current.scrollIntoView({ behavior: "smooth" })}
+                  className="p-3 rounded-full shadow-lg focus:outline-none hover:scale-110 transition-transform"
+                  style={{
+                    backgroundColor: COLORS.primary,
+                    color: COLORS.bgLight,
+                  }}
+                  aria-label="Ke atas - Transaksi"
+              >
+                💵
+              </button>
+            </div>
+        )}
+      </section>
   );
 };
 

@@ -5,15 +5,24 @@ import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import { cn } from "@/lib/tailwind-utils";
 import { Label } from "@/components/ui/label";
 
+// Warna tema krem/emas
+const COLORS = ["#D4AF37", "#C5B358", "#E6BE8A"];
+// Variasi warna krem/emas
+const bgColor = "#FAF3E0"; // Krem muda/background utama
+const textColor = "#8B7D3F"; // Emas gelap untuk teks
+const secondaryTextColor = "#B8A361"; // Emas sedang untuk teks sekunder
+const cardBgColor = "#FFF8E7"; // Krem sangat muda untuk kartu
+const API = import.meta.env.VITE_API;
+
 const Form = FormProvider;
 
 const FormFieldContext = React.createContext({});
 
 const FormField = ({ ...props }) => {
   return (
-    <FormFieldContext.Provider value={{ name: props.name }}>
-      <Controller {...props} />
-    </FormFieldContext.Provider>
+      <FormFieldContext.Provider value={{ name: props.name }}>
+        <Controller {...props} />
+      </FormFieldContext.Provider>
   );
 };
 
@@ -46,9 +55,9 @@ const FormItem = React.forwardRef(({ className, ...props }, ref) => {
   const id = React.useId();
 
   return (
-    <FormItemContext.Provider value={{ id }}>
-      <div ref={ref} className={cn("space-y-2", className)} {...props} />
-    </FormItemContext.Provider>
+      <FormItemContext.Provider value={{ id }}>
+        <div ref={ref} className={cn("space-y-2", className)} {...props} />
+      </FormItemContext.Provider>
   );
 });
 FormItem.displayName = "FormItem";
@@ -57,36 +66,36 @@ const FormLabel = React.forwardRef(({ className, ...props }, ref) => {
   const { error, formItemId } = useFormField();
 
   return (
-    <Label
-      ref={ref}
-      className={cn(error ? "text-red-500" : "text-[#FFD700]", className)}
-      htmlFor={formItemId}
-      {...props}
-    />
+      <Label
+          ref={ref}
+          className={cn(error ? "text-red-500" : `text-[${textColor}]`, className)}
+          htmlFor={formItemId}
+          {...props}
+      />
   );
 });
 FormLabel.displayName = "FormLabel";
 
 const FormControl = React.forwardRef(({ ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } =
-    useFormField();
+      useFormField();
 
   return (
-    <Slot
-      ref={ref}
-      id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
-      aria-invalid={!!error}
-      className={cn(
-        "border-[#FFD700] focus:ring-[#DAA520] text-[#DAA520] placeholder:text-[#DAA520]/50",
-        error && "border-red-500 focus:ring-red-500"
-      )}
-      {...props}
-    />
+      <Slot
+          ref={ref}
+          id={formItemId}
+          aria-describedby={
+            !error
+                ? `${formDescriptionId}`
+                : `${formDescriptionId} ${formMessageId}`
+          }
+          aria-invalid={!!error}
+          className={cn(
+              `border-[${COLORS[0]}] focus:ring-[${COLORS[1]}] text-[${textColor}] placeholder:text-[${textColor}]/50`,
+              error && "border-red-500 focus:ring-red-500"
+          )}
+          {...props}
+      />
   );
 });
 FormControl.displayName = "FormControl";
@@ -95,35 +104,35 @@ const FormDescription = React.forwardRef(({ className, ...props }, ref) => {
   const { formDescriptionId } = useFormField();
 
   return (
-    <p
-      ref={ref}
-      id={formDescriptionId}
-      className={cn("text-sm text-[#DAA520]/80", className)}
-      {...props}
-    />
+      <p
+          ref={ref}
+          id={formDescriptionId}
+          className={cn(`text-sm text-[${secondaryTextColor}]/80`, className)}
+          {...props}
+      />
   );
 });
 FormDescription.displayName = "FormDescription";
 
 const FormMessage = React.forwardRef(
-  ({ className, children, ...props }, ref) => {
-    const { error, formMessageId } = useFormField();
-    const body = error ? String(error?.message) : children;
+    ({ className, children, ...props }, ref) => {
+      const { error, formMessageId } = useFormField();
+      const body = error ? String(error?.message) : children;
 
-    if (!body) {
-      return null;
+      if (!body) {
+        return null;
+      }
+
+      return (
+          <p
+              ref={ref}
+              id={formMessageId}
+              className={cn("text-sm font-medium text-red-500", className)}
+              {...props}>
+            {body}
+          </p>
+      );
     }
-
-    return (
-      <p
-        ref={ref}
-        id={formMessageId}
-        className={cn("text-sm font-medium text-red-500", className)}
-        {...props}>
-        {body}
-      </p>
-    );
-  }
 );
 FormMessage.displayName = "FormMessage";
 
